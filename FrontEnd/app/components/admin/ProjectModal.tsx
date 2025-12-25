@@ -81,7 +81,7 @@ export default function ProjectModal({
               <div>
                 <label className="text-xs font-bold uppercase text-gray-400">Categories</label>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {categories.map(cat => (
+                  {categories.map((cat: string) => (
                     <button key={cat} onClick={() => handleTagChange(cat)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${newProject.tags.includes(cat) ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-400 hover:border-gray-300'}`}>
                       {cat}
                     </button>

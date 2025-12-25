@@ -51,7 +51,7 @@ export default function PagesTab({
       
       {/* Sub-Tabs */}
       <div className="flex gap-4 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
-        {['home', 'about', 'news'].map(tab => (
+        {['home', 'about', 'news'].map((tab: string) => (
           <button 
             key={tab} 
             onClick={() => setActiveSubTab(tab)} 
@@ -135,7 +135,7 @@ export default function PagesTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {teamList.map((member) => (
+                  {teamList.map((member: any) => (
                     <tr key={member.id} className="bg-white hover:bg-gray-50 dark:bg-gray-800 transition-colors">
                       <td className="px-6 py-4">
                         <div className="w-12 h-12 rounded-lg overflow-hidden border bg-gray-50">
@@ -175,7 +175,7 @@ export default function PagesTab({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {newsList.map((news) => (
+                {newsList.map((news: any) => (
                   <tr key={news.id} className="bg-white hover:bg-gray-50 dark:bg-gray-800 transition-colors">
                     <td className="px-6 py-4">
                       <div className="w-16 h-10 rounded overflow-hidden border bg-gray-50">

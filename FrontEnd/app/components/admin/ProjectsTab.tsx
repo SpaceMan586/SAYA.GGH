@@ -125,13 +125,8 @@ export default function ProjectsTab({
                   {/* Category */}
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {project.tags?.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-[10px] rounded uppercase font-bold text-gray-500"
-                        >
-                          {tag}
-                        </span>
+                      {Array.isArray(project.tags) && project.tags.map((t: string) => (
+                        <span key={t} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-[10px] rounded uppercase font-bold text-gray-500">{t}</span>
                       ))}
                     </div>
                   </td>
