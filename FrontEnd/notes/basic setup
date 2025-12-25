@@ -1,0 +1,27 @@
+Flowbite + Next.js Setup
+✅ Basic Setup Complete
+Your Next.js app with Tailwind CSS and Flowbite is ready!
+
+How to Add Flowbite Components:
+1. Visit Flowbite React Docs
+2. Find a component you want to use
+3. Add 'use client'; at the top of your file
+4. Import: import { Component } from 'flowbite-react';
+5. Use it in your JSX
+
+Example Code:
+
+===================================================
+'use client';
+
+import { Button } from 'flowbite-react';
+
+export default function MyPage() {
+  return (
+    <div>
+      <Button>Click me!</Button>
+      <Button color="blue">Primary</Button>
+    </div>
+  );
+}
+===================================================

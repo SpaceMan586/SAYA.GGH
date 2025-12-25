@@ -1,0 +1,66 @@
+"use client";
+
+import { LandingNavbar } from "./components/LandingNavbar";
+import LandingHero from "./components/LandingHero";
+import LandingBottomBar from "./components/LandingBottomBar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+export default function Page() {
+  const [heroData, setHeroData] = useState({ 
+    title: "", 
+    subtitle: "", 
+    image_url: "" 
+  });
+
+  useEffect(() => {
+    async function fetchHero() {
+      const { data } = await supabase.from('page_content').select('*').eq('section', 'home_hero').maybeSingle();
+      if (data) {
+        setHeroData({
+          title: data.title || "",
+          subtitle: data.subtitle || "",
+          image_url: data.image_url || ""
+        });
+      }
+    }
+    fetchHero();
+  }, []);
+
+  return (
+    <main className="relative min-h-screen w-full overflow-hidden bg-gray-900">
+      {/* Background Image */}
+      {heroData.image_url && (
+        <div 
+          className="absolute inset-0 z-0 transition-opacity duration-1000"
+          style={{ 
+            backgroundImage: `url(${heroData.image_url})`, 
+            backgroundSize: 'cover', 
+            backgroundPosition: 'center' 
+          }}
+        >
+          {/* Dark Overlay to ensure text readability */}
+          <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
+        </div>
+      )}
+
+      <LandingNavbar />
+
+      {/* pojok kiri bawah: Background Project Info */}
+      {(heroData.title || heroData.subtitle) && (
+        <div className="absolute bottom-28 left-10 z-20 max-w-lg animate-in fade-in slide-in-from-left-10 duration-1000">
+          <div className="flex flex-col gap-2 border-l-2 border-white pl-6 py-2">
+            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none italic">
+              {heroData.title}
+            </h2>
+            <p className="text-xs md:text-sm font-medium text-gray-200 uppercase tracking-[0.3em] opacity-80 text-justify">
+              {heroData.subtitle}
+            </p>
+          </div>
+        </div>
+      )}
+
+      <LandingBottomBar />
+    </main>
+  );
+}
