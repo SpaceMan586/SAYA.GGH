@@ -34,7 +34,7 @@ export default function LoginPage() {
         <form className="flex flex-col gap-4" onSubmit={handleLogin}>
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="email" value="Your email" />
+              <Label htmlFor="email">Your email</Label>
             </div>
             <TextInput
               id="email"
@@ -47,7 +47,7 @@ export default function LoginPage() {
           </div>
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="password" value="Your password" />
+              <Label htmlFor="password">Your password</Label>
             </div>
             <TextInput
               id="password"
