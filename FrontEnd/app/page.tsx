@@ -32,7 +32,7 @@ export default function Page() {
       {/* Background Image */}
       {heroData.image_url && (
         <div 
-          className="absolute inset-0 z-0 transition-opacity duration-1000"
+          className="absolute inset-0 z-0 transition-opacity duration-1000 animate-slow-zoom"
           style={{ 
             backgroundImage: `url(${heroData.image_url})`, 
             backgroundSize: 'cover', 

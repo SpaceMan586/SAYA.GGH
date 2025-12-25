@@ -14,3 +14,12 @@ body {
   color: var(--foreground);
   font-family: 'Montserrat', sans-serif;
 }
+
+@keyframes slow-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.animate-slow-zoom {
+  animation: slow-zoom 30s ease-in-out infinite alternate;
+}
