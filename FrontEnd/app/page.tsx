@@ -48,14 +48,19 @@ export default function Page() {
 
       {/* pojok kiri bawah: Background Project Info */}
       {(heroData.title || heroData.subtitle) && (
-        <div className="absolute bottom-28 left-10 z-20 max-w-lg animate-in fade-in slide-in-from-left-10 duration-1000">
-          <div className="flex flex-col gap-2 border-l-2 border-white pl-6 py-2">
-            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none italic">
+        <div className="absolute bottom-20 left-6 md:bottom-28 md:left-16 z-20 max-w-xl animate-in fade-in slide-in-from-left-10 duration-1000">
+          <div className="flex flex-col gap-4 border-l-4 border-white/80 pl-6 md:pl-8 py-2 backdrop-blur-sm">
+            <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-[0.9] italic drop-shadow-2xl">
               {heroData.title}
             </h2>
-            <p className="text-xs md:text-sm font-medium text-gray-200 uppercase tracking-[0.3em] opacity-80 text-justify">
+            <p className="text-xs md:text-sm font-semibold text-gray-200 uppercase tracking-[0.3em] opacity-90 text-justify leading-relaxed max-w-md drop-shadow-md">
               {heroData.subtitle}
             </p>
+            
+            <a href="/project" className="mt-4 w-fit group flex items-center gap-3 text-white uppercase text-[10px] font-bold tracking-[0.4em] hover:text-blue-400 transition-colors">
+              <span className="w-8 h-[1px] bg-white group-hover:bg-blue-400 transition-colors"></span>
+              View Project
+            </a>
           </div>
         </div>
       )}

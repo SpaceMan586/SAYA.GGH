@@ -13,15 +13,15 @@ export function LandingNavbar() {
   return (
     <Navbar
       fluid
-      rounded
-      className="fixed top-0 left-0 w-full z-50 border-b border-gray-200 bg-white dark:bg-gray-900 transition-all duration-300 py-2"
+      rounded={false}
+      className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 to-transparent border-none py-6 transition-all duration-300 backdrop-blur-[2px]"
     >
       {/* Brand */}
       <NavbarBrand as="div">
         <Link href="/" className="flex items-center gap-3 group">
           <img src="/Logo.svg" className="h-14 sm:h-16 transition-transform duration-500 group-hover:scale-105" alt="Logo" />
           <div className="flex flex-col">
-            <span className="self-center whitespace-nowrap text-lg font-black tracking-tighter dark:text-white uppercase leading-none">
+            <span className="self-center whitespace-nowrap text-lg font-black tracking-tighter text-white uppercase leading-none">
               SAYA.GGH
             </span>
             <span className="text-[6px] tracking-[0.3em] text-gray-400 font-bold uppercase">Architecture & Design</span>
@@ -55,7 +55,7 @@ export function LandingNavbar() {
         <NavbarLink
           as={Link}
           href="/"
-          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase hover:text-blue-600 transition-colors"
+          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase text-white/80 hover:text-white transition-colors"
         >
           HOME
         </NavbarLink>
@@ -63,7 +63,7 @@ export function LandingNavbar() {
         <NavbarLink
           as={Link}
           href="/about"
-          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase hover:text-blue-600 transition-colors"
+          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase text-white/80 hover:text-white transition-colors"
         >
           ABOUT
         </NavbarLink>
@@ -71,7 +71,7 @@ export function LandingNavbar() {
         <NavbarLink
           as={Link}
           href="/project"
-          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase hover:text-blue-600 transition-colors"
+          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase text-white/80 hover:text-white transition-colors"
         >
           PROJECT
         </NavbarLink>
@@ -79,7 +79,7 @@ export function LandingNavbar() {
         <NavbarLink
           as={Link}
           href="/news"
-          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase hover:text-blue-600 transition-colors"
+          className="text-left w-full md:w-auto text-[10px] font-black tracking-[0.2em] uppercase text-white/80 hover:text-white transition-colors"
         >
           NEWS
         </NavbarLink>

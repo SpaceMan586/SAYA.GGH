@@ -6,6 +6,7 @@ import {
   HiArrowSmRight, 
   HiDocumentText,
 } from "react-icons/hi";
+import Link from "next/link";
 
 interface AdminSidebarProps {
   activeTab: string;
@@ -42,10 +43,10 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
             </li>
         </ul>
         <div className="mt-auto pt-4 border-t">
-            <a href="/" className="flex items-center p-3 text-gray-500 rounded-xl hover:bg-gray-100">
+            <Link href="/" className="flex items-center p-3 text-gray-500 rounded-xl hover:bg-gray-100">
               <HiArrowSmRight className="w-5 h-5" />
               <span className="ml-3">Exit CMS</span>
-            </a>
+            </Link>
         </div>
       </div>
     </aside>
