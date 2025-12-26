@@ -13,8 +13,6 @@ export const metadata: Metadata = {
   description: "Architecture and Design Portfolio",
 };
 
-import { LandingNavbar } from "./components/landing/LandingNavbar";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +26,6 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} font-sans antialiased`}
       >
-        <LandingNavbar />
         {children}
       </body>
     </html>

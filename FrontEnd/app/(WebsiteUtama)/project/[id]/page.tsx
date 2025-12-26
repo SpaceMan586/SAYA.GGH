@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { LandingNavbar } from "../../components/LandingNavbar";
 import LandingBottomBar from "../../components/LandingBottomBar";
 import { AppSidebar } from "../../components/AppSidebar";
 import Link from "next/link";
@@ -62,7 +61,6 @@ export default function ProjectDetail() {
   if (loading) {
      return (
         <>
-            <LandingNavbar />
             <div className="flex h-screen items-center justify-center">Loading...</div>
         </>
      );
@@ -71,7 +69,6 @@ export default function ProjectDetail() {
   if (!project) {
     return (
         <>
-            <LandingNavbar />
             <div className="flex h-screen items-center justify-center">Project not found.</div>
         </>
      );
@@ -79,7 +76,6 @@ export default function ProjectDetail() {
 
   return (
     <>
-      <LandingNavbar />
       <div className="flex">
         <AppSidebar />
         
