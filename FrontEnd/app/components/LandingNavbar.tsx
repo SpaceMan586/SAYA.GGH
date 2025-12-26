@@ -66,7 +66,7 @@ export function LandingNavbar() {
       <NavbarToggle className="md:hidden text-white focus:ring-0 ml-auto" />
 
       {/* DESKTOP MENU (RIGHT ALIGNED) */}
-      <div className="hidden md:flex items-center gap-16 lg:gap-24 ml-auto">
+      <div className="hidden md:flex flex-1 justify-end items-center gap-16 lg:gap-24">
         <Link
           href="/"
           className="text-[10px] lg:text-xs font-bold tracking-[0.3em] uppercase text-white/70 hover:text-white transition-colors"
