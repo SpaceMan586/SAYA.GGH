@@ -10,7 +10,8 @@ import ProjectsTab from "../../components/admin/ProjectsTab";
 import PagesTab from "../../components/admin/PagesTab";
 import ProjectModal from "../../components/admin/ProjectModal";
 import NewsModal from "../../components/admin/NewsModal";
-import { HiX, HiUpload } from "react-icons/hi";
+import TeamModal from "../../components/admin/TeamModal";
+import { HiX } from "react-icons/hi";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -245,33 +246,6 @@ export default function DashboardPage() {
     }
   };
 
-  const ImageUploadUI = () => (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
-      {!imagePreview ? (
-        <div className="flex items-center justify-center w-full">
-          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 transition-all">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <HiUpload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
-              <p className="mb-2 text-sm text-gray-500 dark:text-gray-400 font-semibold">Click to upload</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG or WebP (MAX. 2MB)</p>
-            </div>
-            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-          </label>
-        </div>
-      ) : (
-        <div className="relative w-full h-40 group">
-          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg border shadow-sm" />
-          <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
-             <button onClick={clearImage} className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700">
-                <HiX className="w-5 h-5" />
-             </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden font-sans">
       <AdminSidebar activeTab={activeTab} setActiveTab={(tab) => { clearImage(); setActiveTab(tab); }} />
@@ -342,31 +316,18 @@ export default function DashboardPage() {
         onFileChange={handleFileChange} onClearImage={clearImage}
       />
 
-      {/* Manual Team Modal Implementation */}
-      {isTeamModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm px-4">
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-200 dark:bg-gray-800">
-            <h3 className="text-2xl font-black mb-6 dark:text-white uppercase tracking-tighter italic decoration-blue-600 underline-offset-4">New Team Member</h3>
-            <div className="space-y-5">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase">Full Name</label>
-                <input className="w-full mt-1 p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" placeholder="Member Name" value={newTeamMember.name} onChange={e => setNewTeamMember({ ...newTeamMember, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase">Role / Position</label>
-                <input className="w-full mt-1 p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" placeholder="e.g. Lead Architect" value={newTeamMember.role} onChange={e => setNewTeamMember({ ...newTeamMember, role: e.target.value })} />
-              </div>
-              <ImageUploadUI />
-              <div className="flex gap-4 pt-4">
-                <button onClick={() => setIsTeamModalOpen(false)} className="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">CANCEL</button>
-                <button onClick={handleAddTeam} disabled={uploading} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-transform active:scale-95 disabled:opacity-50">
-                  {uploading ? 'SAVING...' : 'ADD MEMBER'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <TeamModal
+        isOpen={isTeamModalOpen}
+        onClose={() => setIsTeamModalOpen(false)}
+        newTeamMember={newTeamMember}
+        setNewTeamMember={setNewTeamMember}
+        onAdd={handleAddTeam}
+        uploading={uploading}
+        imageFile={imageFile}
+        imagePreview={imagePreview}
+        onFileChange={handleFileChange}
+        onClearImage={clearImage}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import LandingBottomBar from "./components/LandingBottomBar";
+import LandingBottomBar from "./components/landing/LandingBottomBar";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
