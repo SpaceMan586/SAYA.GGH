@@ -28,6 +28,7 @@ export function LandingNavbar() {
   if (isAdminPage) return null;
 
   // Compact if scrolled OR if not on home page
+  // Trigger redeploy
   const isCompact = scrolled || !isHome;
 
   return (
