@@ -1,6 +1,5 @@
 "use client";
 
-import { LandingNavbar } from "../components/LandingNavbar";
 import LandingBottomBar from "../components/LandingBottomBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -20,10 +19,9 @@ export default function NewsPage() {
 
   return (
     <>
-      <LandingNavbar />
       <main className="min-h-screen p-8 pt-32 pb-24 bg-white dark:bg-gray-900 dark:text-white">
         <div className="max-w-screen-xl mx-auto">
-          <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter italic">Latest News</h1>
+          <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter text-gray-900 dark:text-white">Latest News</h1>
           
           {loading ? <p>Loading news...</p> : newsList.length === 0 ? <p>No news yet.</p> : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

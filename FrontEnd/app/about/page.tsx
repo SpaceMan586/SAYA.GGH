@@ -1,6 +1,5 @@
 "use client";
 
-import { LandingNavbar } from "../components/LandingNavbar";
 import LandingBottomBar from "../components/LandingBottomBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -39,7 +38,6 @@ export default function AboutPage() {
 
   return (
     <>
-      <LandingNavbar />
       <main className="min-h-screen bg-white dark:bg-gray-900 dark:text-white pt-32 pb-32 transition-all duration-300">
         <div className="max-w-5xl mx-auto px-6 md:px-10">
           

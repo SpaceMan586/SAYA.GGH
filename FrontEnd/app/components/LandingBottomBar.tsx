@@ -1,16 +1,23 @@
 "use client";
 
-import { Button, DarkThemeToggle } from "flowbite-react";
+import { DarkThemeToggle } from "flowbite-react";
 import { FaInstagram, FaPhone, FaMapMarkerAlt, FaUser } from "react-icons/fa";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function LandingBottomBar() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const isAdminPage = pathname?.startsWith("/admin");
+
+  if (isAdminPage) return null;
+
   return (
-    // fixed: Membuat posisi elemen tetap relatif terhadap viewport
-    // bottom-0: Menempelkan elemen tepat di garis bawah
-    // left-0: Memastikan elemen mulai dari kiri
-    // z-50: Memastikan elemen berada di atas konten lain (agar tidak tertutup)
-    <div className="fixed bottom-0 left-0 z-50 w-full bg-transparent flex items-center justify-between px-6 md:px-12 py-8 transition-all duration-300">
+    <div className={`fixed bottom-0 left-0 z-50 w-full flex items-center justify-between px-6 md:px-12 py-4 transition-all duration-300 ${
+      isHome 
+        ? "bg-transparent" 
+        : "bg-black/90 backdrop-blur-md shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.1)]"
+    }`}>
 
       {/* LEFT SECTION */}
       <div className="flex items-center gap-8 text-[10px] font-bold tracking-[0.4em] uppercase">

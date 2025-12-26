@@ -1,14 +1,17 @@
 "use client";
 
-import { LandingNavbar } from "./components/LandingNavbar";
-import LandingHero from "./components/LandingHero";
 import LandingBottomBar from "./components/LandingBottomBar";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+
+
 
 export default function Page() {
-  const [heroData, setHeroData] = useState({ 
+
+  const [heroData, setHeroData] = useState({
+
+ 
     title: "", 
     subtitle: "", 
     image_url: "" 
@@ -49,8 +52,6 @@ export default function Page() {
           <div className="absolute inset-0 bg-black/20 dark:bg-black/40" />
         </div>
       )}
-
-      <LandingNavbar />
 
       {/* Hero Text */}
       {(heroData.title || heroData.subtitle) && (

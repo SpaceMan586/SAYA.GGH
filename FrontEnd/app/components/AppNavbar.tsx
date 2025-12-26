@@ -32,11 +32,11 @@ export function AppNavbar() {
           pr-10                        /* Padding Kanan diperbesar  */
           
           /* --- TAMPILAN DESKTOP (Reset ke normal) --- */
-          md:static md:w-auto md:h-auto md:bg-transparent md:border-none md:shadow-none md:p-0
+          md:static md:ml-auto md:w-auto md:h-auto md:bg-transparent md:border-none md:shadow-none md:p-0
         "
       >
-        {/* Kita tambahkan items-start agar teks menempel ke KIRI */ }
-        <div className="flex flex-col md:flex-row md:gap-10 items-start md:items-end">
+        {/* RIGHT ALIGNED DESKTOP MENU */}
+        <div className="flex flex-col md:flex-row md:gap-10 items-start md:items-center">
             <NavbarLink as={Link} href="/" className="w-full text-left md:w-auto mb-4 md:mb-0">
             HOME
             </NavbarLink>

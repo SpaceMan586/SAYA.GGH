@@ -1,6 +1,5 @@
 "use client";
 
-import { LandingNavbar } from "../components/LandingNavbar";
 import LandingBottomBar from "../components/LandingBottomBar";
 import { AppSidebar } from "../components/AppSidebar";
 import Link from "next/link";
@@ -33,18 +32,18 @@ export default function ProjectPage() {
 
   return (
     <>
-      <LandingNavbar />
       <div className="flex">
         <AppSidebar />
-        <main className="flex-1 min-h-screen pt-24 pb-20 bg-white dark:bg-gray-900 dark:text-white ml-64 transition-all duration-300">
+        <main className="flex-1 min-h-screen pt-32 pb-20 bg-white dark:bg-gray-900 dark:text-white ml-64 transition-all duration-300">
           
-          {/* Header Section */}
-          <div className="px-8 py-6 border-b border-gray-100 dark:border-gray-800 mb-6">
-            <h1 className="text-4xl font-light tracking-widest uppercase">Projects</h1>
+          {/* Header Section - Centered for Gallery Feel */}
+          <div className="px-6 md:px-12 mb-12 text-left animate-in fade-in slide-in-from-bottom-4 duration-700">
+             <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-gray-900 dark:text-white mb-2">Selected Works</h1>
+             <p className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400">Architecture & Interior Design</p>
           </div>
 
           {/* Grid Section */}
-          <div className="px-8">
+          <div className="px-6 md:px-12 max-w-[1920px] mx-auto">
             {loading ? (
               <div className="flex h-64 w-full items-center justify-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">
                 Loading projects...
@@ -54,16 +53,16 @@ export default function ProjectPage() {
                 No projects found.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
                 {projects.map((project) => (
                   <Link key={project.id} href={`/project/${project.id}`} className="group cursor-pointer block">
                     {/* Image Container with HD hover effect */}
-                    <div className="relative w-full aspect-[16/10] bg-gray-100 dark:bg-gray-800 overflow-hidden mb-6 rounded-2xl shadow-sm group-hover:shadow-2xl group-hover:shadow-black/10 transition-all duration-700">
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-800 overflow-hidden mb-4 shadow-sm group-hover:shadow-2xl group-hover:shadow-black/20 transition-all duration-700">
                       {project.image_url ? (
                         <img 
                           src={project.image_url} 
                           alt={project.title} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[1.5s] ease-out"
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-gray-300 group-hover:scale-110 transition-transform duration-[1.5s]">
@@ -71,22 +70,19 @@ export default function ProjectPage() {
                         </div>
                       )}
                       {/* Subtle Overlay on hover */}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-700"></div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-700"></div>
                     </div>
                     
                     {/* Refined Text Info */}
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-xl font-black tracking-tighter uppercase text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors duration-300">
-                          {project.title}
-                        </h3>
-                        <span className="text-[10px] font-black px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded uppercase tracking-widest text-gray-400">
-                          {project.status}
-                        </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <h3 className="text-xl font-black tracking-tighter uppercase text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors duration-300 leading-none">
+                        {project.title}
+                      </h3>
+                      <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mt-1">
+                        <span>{project.location}</span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span> 
+                        <span>{project.year}</span>
                       </div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2">
-                        {project.location} <span className="w-1 h-1 bg-gray-300 rounded-full"></span> {project.year}
-                      </p>
                     </div>
                   </Link>
                 ))}
