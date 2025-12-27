@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import LandingBottomBar from "../../components/LandingBottomBar";
-import { AppSidebar } from "../../components/AppSidebar";
+
 import Link from "next/link";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
 import { useEffect, useState } from "react";
@@ -76,62 +76,57 @@ export default function ProjectDetail() {
 
   return (
     <>
-      <div className="flex">
-        <AppSidebar />
+      <main className="min-h-screen bg-white pt-24 pb-20">
         
-        {/* Main Content with Left Margin for Sidebar */}
-        <main className="flex-1 min-h-screen bg-white dark:bg-gray-900 dark:text-white ml-64 pt-24 pb-20">
+        {/* Top Navigation (Prev/Next) */}
+        <div className="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center text-sm font-medium uppercase tracking-widest text-gray-500">
+          {nav.prev ? (
+              <Link href={`/project/${nav.prev}`} className="flex items-center gap-2 hover:text-black transition-colors">
+                <HiArrowLeft /> {nav.prevTitle}
+              </Link>
+          ) : <div></div>}
           
-          {/* Top Navigation (Prev/Next) */}
-          <div className="max-w-7xl mx-auto px-8 py-6 flex justify-between items-center text-sm font-medium uppercase tracking-widest text-gray-500">
-            {nav.prev ? (
-                <Link href={`/project/${nav.prev}`} className="flex items-center gap-2 hover:text-black dark:hover:text-white transition-colors">
-                  <HiArrowLeft /> {nav.prevTitle}
-                </Link>
-            ) : <div></div>}
-            
-            {nav.next ? (
-                <Link href={`/project/${nav.next}`} className="flex items-center gap-2 hover:text-black dark:hover:text-white transition-colors">
-                  {nav.nextTitle} <HiArrowRight />
-                </Link>
-            ) : <div></div>}
-          </div>
+          {nav.next ? (
+              <Link href={`/project/${nav.next}`} className="flex items-center gap-2 hover:text-black transition-colors">
+                {nav.nextTitle} <HiArrowRight />
+              </Link>
+          ) : <div></div>}
+        </div>
 
-          {/* Content Layout: Left Text, Right Image */}
-          <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 h-[calc(100vh-14rem)]">
+        {/* Content Layout: Left Text, Right Image */}
+        <div className="max-w-7xl mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 h-[calc(100vh-14rem)]">
+          
+          {/* Left Column: Info */}
+          <div className="flex flex-col justify-center">
+            <h1 className="text-5xl font-light mb-8 uppercase tracking-wide text-black">
+              {project.title}
+            </h1>
             
-            {/* Left Column: Info */}
-            <div className="flex flex-col justify-center">
-              <h1 className="text-5xl font-light mb-8 uppercase tracking-wide text-black dark:text-white">
-                {project.title}
-              </h1>
-              
-              <div className="space-y-1 text-lg font-light text-gray-600 dark:text-gray-300 mb-12">
-                <p><span className="w-32 inline-block">Status</span> : {project.status}</p>
-                <p><span className="w-32 inline-block">Lokasi</span> : {project.location}</p>
-                <p><span className="w-32 inline-block">Tahun</span> : {project.year}</p>
-              </div>
-
-              <div className="text-xl font-light text-gray-500 dark:text-gray-400 text-justify">
-                {project.description || "No description available."}
-              </div>
+            <div className="space-y-1 text-lg font-light text-gray-600 mb-12">
+              <p><span className="w-32 inline-block">Status</span> : {project.status}</p>
+              <p><span className="w-32 inline-block">Lokasi</span> : {project.location}</p>
+              <p><span className="w-32 inline-block">Tahun</span> : {project.year}</p>
             </div>
 
-            {/* Right Column: Image */}
-            <div className="h-full w-full bg-gray-200 dark:bg-gray-800 relative overflow-hidden">
-               {project.image_url ? (
-                  <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
-               ) : (
-                   <div className="absolute inset-0 flex items-center justify-center">
-                     <span className="text-gray-400 text-2xl font-light tracking-widest">NO IMAGE</span>
-                   </div>
-               )}
+            <div className="text-xl font-light text-gray-500 text-justify">
+              {project.description || "No description available."}
             </div>
-
           </div>
 
-        </main>
-      </div>
+          {/* Right Column: Image */}
+          <div className="h-full w-full bg-gray-200 relative overflow-hidden">
+             {project.image_url ? (
+                <img src={project.image_url} alt={project.title} className="w-full h-full object-cover" />
+             ) : (
+                 <div className="absolute inset-0 flex items-center justify-center">
+                   <span className="text-gray-400 text-2xl font-light tracking-widest">NO IMAGE</span>
+                 </div>
+             )}
+          </div>
+
+        </div>
+
+      </main>
       <LandingBottomBar />
     </>
   );
