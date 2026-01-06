@@ -1,6 +1,7 @@
 "use client";
 
 import LandingBottomBar from "../components/LandingBottomBar";
+import { AppSidebar } from "../components/AppSidebar";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -32,26 +33,27 @@ export default function ProjectPage() {
 
   return (
     <>
-      <main className="min-h-screen pt-32 pb-20 bg-white">
+      <AppSidebar />
+      <main className="min-h-screen pt-32 pb-20 bg-white pl-64">
         
         {/* Header Section - Centered for Gallery Feel */}
         <div className="px-6 md:px-12 mb-12 text-left animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase text-black mb-2">Selected Works</h1>
-            <p className="text-[10px] font-bold tracking-[0.4em] uppercase text-gray-400">Architecture & Interior Design</p>
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tighter uppercase text-black mb-2">Selected Works</h1>
+            <p className="text-[10px] font-semibold tracking-[0.4em] uppercase text-gray-400">Architecture & Interior Design</p>
         </div>
 
         {/* Grid Section */}
         <div className="px-6 md:px-12 max-w-[1920px] mx-auto">
           {loading ? (
-            <div className="flex h-64 w-full items-center justify-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">
+            <div className="flex h-64 w-full items-center justify-center text-gray-400 font-semibold uppercase tracking-widest animate-pulse">
               Loading projects...
             </div>
           ) : projects.length === 0 ? (
-            <div className="flex h-64 w-full items-center justify-center text-gray-400 font-bold uppercase tracking-widest border-2 border-dashed rounded-3xl">
+            <div className="flex h-64 w-full items-center justify-center text-gray-400 font-semibold uppercase tracking-widest border-2 border-dashed rounded-3xl">
               No projects found.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16">
               {projects.map((project) => (
                 <Link key={project.id} href={`/project/${project.id}`} className="group cursor-pointer block">
                   {/* Image Container with HD hover effect */}
@@ -73,10 +75,10 @@ export default function ProjectPage() {
                   
                   {/* Refined Text Info */}
                   <div className="flex flex-col gap-1 items-start">
-                    <h3 className="text-xl font-black tracking-tighter uppercase text-black group-hover:text-blue-600 transition-colors duration-300 leading-none">
+                    <h3 className="text-xl font-semibold tracking-tighter uppercase text-black group-hover:text-blue-600 transition-colors duration-300 leading-none">
                       {project.title}
                     </h3>
-                    <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-400 mt-1">
+                    <div className="flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-gray-400 mt-1">
                       <span>{project.location}</span>
                       <span className="w-1 h-1 bg-gray-300 rounded-full"></span> 
                       <span>{project.year}</span>

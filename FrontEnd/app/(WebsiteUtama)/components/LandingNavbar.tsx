@@ -35,14 +35,14 @@ export function LandingNavbar() {
     <Navbar
       fluid
       rounded={false}
-      className={`fixed top-0 left-0 w-full z-50 border-none transition-all duration-500 px-6 md:px-20 py-4 bg-white`}
+      className={`fixed top-0 left-0 w-full z-50 border-none transition-all duration-500 px-6 md:px-20 py-0 bg-white`}
     >
       {/* Brand */}
       <NavbarBrand as="div">
         <Link href="/" className="flex items-center gap-3 md:gap-4 group">
           <img 
-            src="/BlackLogo.svg" 
-            className="transition-all duration-500 h-12 md:h-16" 
+            src="/BlackLogo.png" 
+            className="transition-all duration-500 h-14 md:h-20" 
             alt="SAYA GGH Logo" 
           />
         </Link>
@@ -52,22 +52,28 @@ export function LandingNavbar() {
       <NavbarToggle className="md:hidden text-black focus:ring-0 ml-auto" />
 
       {/* DESKTOP MENU (RIGHT ALIGNED) */}
-      <div className="hidden md:flex flex-1 justify-end items-center gap-16 lg:gap-24">
+      <div className="hidden md:flex flex-1 justify-end items-center gap-16 lg:gap-10">
+        <Link
+          href="/"
+          className="text-[10px] lg:text-xs font-semibold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
+        >
+          HOME
+        </Link>
         <Link
           href="/about"
-          className="text-[10px] lg:text-xs font-bold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
+          className="text-[10px] lg:text-xs font-semibold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
         >
           ABOUT
         </Link>
         <Link
           href="/project"
-          className="text-[10px] lg:text-xs font-bold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
+          className="text-[10px] lg:text-xs font-semibold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
         >
           PROJECT
         </Link>
         <Link
           href="/news"
-          className="text-[10px] lg:text-xs font-bold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
+          className="text-[10px] lg:text-xs font-semibold tracking-[0.3em] uppercase text-black/70 hover:text-black transition-colors"
         >
           NEWS
         </Link>
@@ -76,9 +82,10 @@ export function LandingNavbar() {
       {/* MOBILE MENU (COLLAPSIBLE) */}
       <NavbarCollapse className="md:hidden">
         <div className="flex flex-col gap-6 py-4 bg-white p-6 rounded-xl mt-4 shadow-xl">
-          <Link href="/about" className="text-sm font-bold tracking-[0.2em] text-black uppercase">About</Link>
-          <Link href="/project" className="text-sm font-bold tracking-[0.2em] text-black uppercase">Project</Link>
-          <Link href="/news" className="text-sm font-bold tracking-[0.2em] text-black uppercase">News</Link>
+          <Link href="/" className="text-sm font-semibold tracking-[0.2em] text-black uppercase">Home</Link>
+          <Link href="/about" className="text-sm font-semibold tracking-[0.2em] text-black uppercase">About</Link>
+          <Link href="/project" className="text-sm font-semibold tracking-[0.2em] text-black uppercase">Project</Link>
+          <Link href="/news" className="text-sm font-semibold tracking-[0.2em] text-black uppercase">News</Link>
         </div>
       </NavbarCollapse>
     </Navbar>

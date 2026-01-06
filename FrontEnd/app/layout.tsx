@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
-import { ThemeModeScript } from "flowbite-react";
 import "./globals.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -19,12 +20,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <ThemeModeScript />
-      </head>
+    <html lang="en">
       <body
-        className={`${montserrat.variable} font-sans antialiased`}
+        className={`${montserrat.variable} font-sans antialiased bg-white text-black`}
       >
         {children}
       </body>

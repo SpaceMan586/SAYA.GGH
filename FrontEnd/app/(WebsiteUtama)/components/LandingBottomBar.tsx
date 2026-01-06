@@ -1,6 +1,5 @@
 "use client";
 
-import { DarkThemeToggle } from "flowbite-react";
 import { FaInstagram, FaPhone, FaMapMarkerAlt, FaUser } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,7 +15,7 @@ export default function LandingBottomBar() {
     <div className="fixed bottom-0 left-0 z-50 w-full flex items-center justify-between px-6 md:px-12 py-4 bg-white transition-all duration-300">
 
       {/* LEFT SECTION */}
-      <div className="flex items-center gap-8 text-[10px] font-bold tracking-[0.4em] uppercase">
+      <div className="flex items-center gap-8 text-[10px] font-semibold tracking-[0.4em] uppercase">
         <span className="text-black/60 hover:text-black cursor-pointer transition-colors">IND / ENG</span>
         <Link href="/admin/login" aria-label="Admin Login">
           <FaUser className="text-black/40 text-base hover:text-black transition-all hover:scale-110 cursor-pointer" />
@@ -32,9 +31,14 @@ export default function LandingBottomBar() {
 
       {/* RIGHT SECTION (BUTTON) */}
       <div className="flex items-center gap-8">
-        <button className="bg-gray-900 hover:bg-black text-white text-[10px] font-bold tracking-[0.4em] px-10 py-3 uppercase transition-all active:scale-95 rounded-sm">
+        <a 
+          href="https://wa.me/628123456789?text=Halo,%20saya%20tertarik%20dengan%20jasa%20arsitektur%20Anda." 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="bg-gray-900 hover:bg-black text-white text-[10px] font-semibold tracking-[0.4em] px-10 py-3 uppercase transition-all active:scale-95 rounded-sm flex items-center gap-2"
+        >
           REACH US
-        </button>
+        </a>
       </div>
     </div>
   );

@@ -5,10 +5,13 @@ import { supabase } from "@/lib/supabase";
 
 // Components
 import AdminSidebar from "../../components/admin/AdminSidebar";
-import OverviewTab from "../../components/admin/OverviewTab";
 import ProjectsTab from "../../components/admin/ProjectsTab";
 import PagesTab from "../../components/admin/PagesTab";
+import OverviewTab from "../../components/admin/OverviewTab";
+import TrainingTab from "../../components/admin/TrainingTab";
+import ChatInbox from "../../components/admin/ChatInbox";
 import ProjectModal from "../../components/admin/ProjectModal";
+
 import NewsModal from "../../components/admin/NewsModal";
 import TeamModal from "../../components/admin/TeamModal";
 import { HiX } from "react-icons/hi";
@@ -289,6 +292,9 @@ export default function DashboardPage() {
             onClearImage={clearImage}
           />
         )}
+
+        {activeTab === "training" && <TrainingTab />}
+        {activeTab === "inbox" && <ChatInbox />}
       </main>
 
       <ProjectModal 

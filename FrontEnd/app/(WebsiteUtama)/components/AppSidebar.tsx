@@ -28,7 +28,7 @@ export function AppSidebar() {
           <div className="flex flex-col justify-end flex-1 gap-0">
             
             <SidebarItemGroup className="border-t-0 p-0">
-              <div className="mb-4 px-6 text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 italic">
+              <div className="mb-4 px-6 text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600 italic">
                 Type
               </div>
               <SidebarItem href="#" className="rounded-none hover:bg-gray-50 px-6 py-3 text-[10px] font-bold tracking-widest uppercase">RESIDENTIAL</SidebarItem>

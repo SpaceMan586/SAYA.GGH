@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-
 :root {
   --background: #ffffff;
   --foreground: #000000;
@@ -12,8 +10,44 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Montserrat', sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll during transitions */
 }
+
+/* --- PAGE TRANSITION ANIMATIONS --- */
+
+@keyframes slideInFromBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(5px);
+  }
+}
+
+.page-enter {
+  animation: slideInFromBottom 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.page-exit {
+  animation: fadeOut 0.4s cubic-bezier(0.4, 0.0, 1, 1) forwards;
+}
+
+/* --- EXISTING ANIMATIONS --- */
 
 @keyframes slow-zoom {
   from { transform: scale(1); }

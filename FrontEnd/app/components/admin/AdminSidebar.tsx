@@ -5,6 +5,7 @@ import {
   HiViewBoards, 
   HiArrowSmRight, 
   HiDocumentText,
+  HiLightningBolt,
 } from "react-icons/hi";
 import Link from "next/link";
 
@@ -18,8 +19,8 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-200 bg-white transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800" aria-label="Sidebar">
       <div className="h-full px-4 py-6 overflow-y-auto bg-white dark:bg-gray-800 flex flex-col">
         <div className="px-2 py-4 mb-8 text-center border-b pb-8">
-            <img src="/Logo.svg" className="h-16 mx-auto mb-2" alt="SAYA.GGH Logo" />
-            <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white uppercase">SAYA.GGH</span>
+            <img src="/BlackLogo.png" className="h-16 mx-auto mb-2" alt="SAYA.GGH Logo" />
+            <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white uppercase">SAYA.GGH</span>
             <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] mt-1 font-bold">Content Manager</p>
         </div>
         <ul className="space-y-2 font-medium flex-1">
@@ -39,6 +40,18 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
               <a onClick={() => setActiveTab('pages')} className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${activeTab === 'pages' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
                   <HiDocumentText className="w-5 h-5" />
                   <span className="ml-3">Pages</span>
+              </a>
+            </li>
+            <li>
+              <a onClick={() => setActiveTab('training')} className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${activeTab === 'training' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  <HiLightningBolt className="w-5 h-5" />
+                  <span className="ml-3">AI Training</span>
+              </a>
+            </li>
+            <li>
+              <a onClick={() => setActiveTab('inbox')} className={`flex items-center p-3 rounded-xl cursor-pointer transition-colors ${activeTab === 'inbox' ? 'bg-gray-900 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                  <HiDocumentText className="w-5 h-5" /> {/* Reusing icon or import HiInbox if available, using HiDocumentText as placeholder safely or assume HiChat if available. Let's stick to known imports or add one. */}
+                  <span className="ml-3">Inbox</span>
               </a>
             </li>
         </ul>

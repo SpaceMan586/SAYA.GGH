@@ -21,7 +21,7 @@ export default function NewsPage() {
     <>
       <main className="min-h-screen p-8 pt-32 pb-24 bg-white">
         <div className="max-w-screen-xl mx-auto">
-          <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter text-black">Latest News</h1>
+          <h1 className="text-5xl font-bold mb-12 uppercase tracking-tighter text-black">Latest News</h1>
           
           {loading ? <p>Loading news...</p> : newsList.length === 0 ? <p>No news yet.</p> : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -36,7 +36,7 @@ export default function NewsPage() {
                     <p className="text-xs font-bold text-blue-600 uppercase mb-2">{item.date}</p>
                     <h3 className="text-xl font-bold mb-4 line-clamp-2 text-black">{item.title}</h3>
                     <p className="text-gray-500 text-sm line-clamp-3 mb-6 text-justify">{item.content}</p>
-                    <button className="text-sm font-black uppercase tracking-widest border-b-2 border-black pb-1 hover:text-blue-600 transition-colors">Read More</button>
+                    <button className="text-sm font-bold uppercase tracking-widest border-b-2 border-black pb-1 hover:text-blue-600 transition-colors">Read More</button>
                   </div>
                 </div>
               ))}

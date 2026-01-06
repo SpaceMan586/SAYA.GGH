@@ -68,7 +68,7 @@ export default function AboutPage() {
 
               {/* OUR TEAM Section */}
               <div className="mt-32 text-center">
-                <h2 className="text-2xl md:text-3xl font-black text-black uppercase tracking-tighter mb-16 italic decoration-gray-200 underline-offset-8 inline-block">
+                <h2 className="text-2xl md:text-3xl font-bold text-black uppercase tracking-tighter mb-16 italic decoration-gray-200 underline-offset-8 inline-block">
                   OUR TEAM
                 </h2>
 
@@ -90,7 +90,7 @@ export default function AboutPage() {
                         </div>
                         {/* Name & Role */}
                         <div className="border-l-2 border-gray-200 group-hover:border-black pl-6 transition-all duration-500">
-                          <h3 className="text-xl font-black text-black uppercase tracking-tighter leading-tight italic">
+                          <h3 className="text-xl font-bold text-black uppercase tracking-tighter leading-tight italic">
                             {member.name}
                           </h3>
                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mt-2">
