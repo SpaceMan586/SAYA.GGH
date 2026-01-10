@@ -40,8 +40,8 @@ export default function PageTransition({
       filter: "blur(0px)",
       scale: 1,
       transition: {
-        duration: 0.8,
-        ease: [0.22, 1, 0.36, 1] // Custom Cubic Bezier untuk feel "mewah"
+        duration: 0.5,
+        ease: [0.22, 1, 0.36, 1]
       }
     },
     exit: { 
@@ -49,14 +49,14 @@ export default function PageTransition({
       y: -10, 
       filter: "blur(4px)",
       transition: {
-        duration: 0.4,
+        duration: 0.2,
         ease: "easeIn"
       }
     }
   };
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={pathname}
         initial="hidden"

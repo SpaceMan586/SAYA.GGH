@@ -1,15 +1,12 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
     const { message, sessionId } = await req.json();
-    const msg = message.toLowerCase();
+    const userMessage = message.toLowerCase().trim();
 
-    // 1. Simpan Pesan User ke Database
+    // 1. Simpan Pesan User
     if (sessionId) {
       await supabase.from('chat_messages').insert([{
         session_id: sessionId,
@@ -18,79 +15,87 @@ export async function POST(req: Request) {
       }]);
     }
 
-    // 2. Cek Status Sesi (Human vs AI)
+    // 2. Cek Mode Manual (Human)
     let isHumanMode = false;
     if (sessionId) {
-      const { data: session } = await supabase.from('chat_sessions').select('status').eq('id', sessionId).single();
-      if (session?.status === 'human') {
-        isHumanMode = true;
+      const { data: session } = await supabase.from('chat_sessions').select('status').eq('id', sessionId).maybeSingle();
+      if (session?.status === 'human') isHumanMode = true;
+    }
+    if (isHumanMode) return NextResponse.json({ reply: null, mode: 'human' });
+
+    // 3. LOGIKA "SMART KEYWORD MATCHING" (AI LOKAL SEDERHANA)
+    // Ambil semua data pengetahuan dari database
+    const { data: knowledgeBase } = await supabase.from('ai_knowledge').select('topic, content');
+    
+    let bestMatch = null;
+    let highestScore = 0;
+
+    if (knowledgeBase && knowledgeBase.length > 0) {
+      // Normalisasi & Sinonim Dasar
+      // Mapping kata user -> topik yang mungkin dimaksud
+      const synonyms: Record<string, string[]> = {
+        'lokasi': ['alamat', 'tempat', 'dimana', 'posisi', 'kantor', 'studio'],
+        'harga': ['biaya', 'fee', 'tarif', 'budget', 'mahal', 'murah', 'rate'],
+        'kontak': ['hubungi', 'wa', 'whatsapp', 'telpon', 'email', 'nomor'],
+        'layanan': ['jasa', 'bikin', 'buat', 'desain', 'bangun', 'renovasi'],
+        'portfolio': ['karya', 'proyek', 'hasil', 'contoh', 'gambar'],
+      };
+
+      for (const item of knowledgeBase) {
+        const topicLower = item.topic.toLowerCase();
+        let score = 0;
+
+        // A. Cek kecocokan langsung dengan Topik
+        if (userMessage.includes(topicLower)) score += 10;
+
+        // B. Cek kecocokan dengan Isi Konten (keyword penting)
+        // Kita pecah topik jadi kata-kata kunci
+        const topicWords = topicLower.split(" ");
+        for (const word of topicWords) {
+          if (word.length > 3 && userMessage.includes(word)) score += 3;
+        }
+
+        // C. Cek Sinonim (Logika Cerdas)
+        // Jika topik database adalah "Lokasi", tapi user tanya "Alamat", kita kasih poin.
+        for (const [key, words] of Object.entries(synonyms)) {
+            // Jika topik mengandung key (misal topik="Info Lokasi")
+            if (topicLower.includes(key)) {
+                // Dan pesan user mengandung salah satu sinonim (misal "alamat")
+                if (words.some(w => userMessage.includes(w))) score += 5;
+            }
+        }
+
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = item;
+        }
       }
     }
 
-    // JIKA MODE HUMAN: Stop di sini, jangan biarkan AI menjawab.
-    if (isHumanMode) {
-      return NextResponse.json({ reply: null, mode: 'human' });
+    // 4. Tentukan Jawaban
+    let botReply = "";
+    
+    // Ambang batas skor agar tidak asal jawab (threshold)
+    if (bestMatch && highestScore >= 3) {
+      botReply = bestMatch.content;
+    } else {
+      // Fallback Default jika tidak mengerti
+      botReply = "Maaf, saya belum diajari tentang hal itu. Silakan tanya tentang Lokasi, Harga, atau Layanan kami, atau hubungi via WhatsApp untuk detailnya.";
     }
 
-    // --- LOGIKA AI DI BAWAH INI ---
-
-    // 3. (Hapus Fallback Hardcoded agar Knowledge Base terbaca)
-    // Sekarang semua pertanyaan akan diproses oleh Gemini yang sudah dibekali Data Training.
-
-    // 4. Cek API Key
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) {
-      const reply = "Halo! Saya asisten SAYA.GGH. (Catatan: AI belum terkonfigurasi sepenuhnya, silakan hubungi kami langsung via WhatsApp untuk pertanyaan detail).";
-      if (sessionId) await saveBotReply(sessionId, reply);
-      return NextResponse.json({ reply });
+    // 5. Simpan Jawaban Bot
+    if (sessionId) {
+      await supabase.from('chat_messages').insert([{
+        session_id: sessionId,
+        role: 'bot',
+        content: botReply
+      }]);
     }
 
-    // 5. Fetch "Otak" Tambahan dari Supabase (Knowledge Base)
-    const { data: knowledgeData } = await supabase.from('ai_knowledge').select('topic, content');
-    const knowledgeString = knowledgeData?.map(k => `FAKTA PENTING [${k.topic}]: ${k.content}`).join("\n") || "";
-
-    // 6. Proses dengan Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const prompt = `
-      Anda adalah asisten virtual untuk SAYA.GGH (Studio Arsitektur).
-
-      DATA KHUSUS DARI PEMILIK STUDIO (WAJIB DIGUNAKAN):
-      ${knowledgeString}
-      --------------------------------------------------
-      
-      Informasi Default (Gunakan HANYA jika TIDAK ada info di Data Khusus):
-      - Lokasi Umum: Jakarta, Indonesia.
-      - Layanan: Arsitektur & Interior.
-      
-      Instruksi PENTING:
-      1. Jika pertanyaan user terjawab di "DATA KHUSUS", abaikan informasi default. (Contoh: Jika Data Khusus bilang lokasi di "Condet", JANGAN jawab "Jakarta").
-      2. Jawablah dengan ramah, sopan, dan singkat (maks 3 kalimat).
-      3. Jangan mengarang fakta yang tidak ada.
-      
-      Pertanyaan User: "${message}"
-    `;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    // Simpan balasan AI ke database
-    if (sessionId) await saveBotReply(sessionId, text);
-
-    return NextResponse.json({ reply: text });
+    return NextResponse.json({ reply: botReply });
 
   } catch (error) {
-    console.error("Chat API Error:", error);
-    return NextResponse.json({ reply: "Maaf, sedang ada gangguan. Silakan hubungi WhatsApp kami." }, { status: 500 });
+    console.error("Chat Error:", error);
+    return NextResponse.json({ reply: "Terjadi kesalahan sistem." }, { status: 500 });
   }
-}
-
-// Helper untuk simpan balasan bot
-async function saveBotReply(sessionId: string, content: string) {
-  await supabase.from('chat_messages').insert([{
-    session_id: sessionId,
-    role: 'bot',
-    content: content
-  }]);
 }

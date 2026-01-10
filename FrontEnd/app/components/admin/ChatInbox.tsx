@@ -26,11 +26,20 @@ export default function ChatInbox() {
   }, []);
 
   const fetchSessions = async () => {
-    const { data } = await supabase
-      .from('chat_sessions')
-      .select('*')
-      .order('created_at', { ascending: false });
-    setSessions(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error("Error fetching sessions:", error);
+      } else {
+        setSessions(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
   };
 
   // 2. Load Messages
@@ -115,8 +124,9 @@ export default function ChatInbox() {
       
       {/* LEFT: SESSIONS LIST */}
       <div className="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
-        <div className="p-4 border-b border-gray-200 bg-white">
+        <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
           <h2 className="font-bold text-lg">Inbox</h2>
+          <button onClick={() => fetchSessions()} className="text-xs text-blue-600 hover:underline">Refresh</button>
         </div>
         <div className="flex-1 overflow-y-auto">
           {sessions.map((session) => (

@@ -63,8 +63,16 @@ export const LiveChat = () => {
   }, [sessionId]);
 
   const fetchHistory = async (id: string) => {
-    const { data: session } = await supabase.from('chat_sessions').select('status').eq('id', id).single();
-    if (session?.status === 'human') setIsHumanMode(true);
+    const { data: session, error } = await supabase.from('chat_sessions').select('status').eq('id', id).maybeSingle();
+    
+    // Jika sesi tidak ditemukan di DB (misal sudah dihapus), reset state
+    if (!session || error) {
+      localStorage.removeItem("chat_session_id");
+      setSessionId(null);
+      return;
+    }
+
+    if (session.status === 'human') setIsHumanMode(true);
 
     const { data: msgs } = await supabase.from('chat_messages').select('*').eq('session_id', id).order('created_at', { ascending: true });
     if (msgs && msgs.length > 0) {
