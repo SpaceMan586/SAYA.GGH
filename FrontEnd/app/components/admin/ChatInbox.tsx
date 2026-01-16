@@ -57,6 +57,7 @@ export default function ChatInbox() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSessionId]);
 
   const fetchMessages = async (sessionId: string) => {
