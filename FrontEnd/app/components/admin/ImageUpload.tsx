@@ -3,16 +3,17 @@
 import { HiUpload, HiX } from "react-icons/hi";
 
 interface ImageUploadProps {
-  imageFile: File | null;
+  label?: string;
+  imageFile?: File | null;
   imagePreview: string | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
 }
 
-export default function ImageUpload({ imageFile, imagePreview, onFileChange, onClear }: ImageUploadProps) {
+export default function ImageUpload({ label = "Upload Image", imagePreview, onFileChange, onClear }: ImageUploadProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Image</label>
+      <label className="text-xs font-bold uppercase text-gray-400">{label}</label>
       {!imagePreview ? (
         <div className="flex items-center justify-center w-full">
           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600 transition-all">

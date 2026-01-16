@@ -1,5 +1,6 @@
 "use client";
 
+import { HiX } from "react-icons/hi";
 import ImageUpload from "./ImageUpload";
 
 interface PagesTabProps {
@@ -22,6 +23,10 @@ interface PagesTabProps {
   imagePreview: string | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearImage: () => void;
+  // New Props for Home Gallery
+  homeGalleryPreviews?: string[];
+  onHomeGalleryChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveHomeGalleryImage?: (index: number) => void;
 }
 
 export default function PagesTab({
@@ -43,7 +48,10 @@ export default function PagesTab({
   imageFile,
   imagePreview,
   onFileChange,
-  onClearImage
+  onClearImage,
+  homeGalleryPreviews = [],
+  onHomeGalleryChange,
+  onRemoveHomeGalleryImage
 }: PagesTabProps) {
   return (
     <div className="space-y-6">
@@ -75,15 +83,58 @@ export default function PagesTab({
               <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-white">Subtitle</label>
               <textarea className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" rows={2} value={homeData.subtitle} onChange={e => setHomeData({...homeData, subtitle: e.target.value})} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-              <ImageUpload imageFile={imageFile} imagePreview={imagePreview} onFileChange={onFileChange} onClear={onClearImage} />
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Background</label>
-                <div className="h-40 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center dark:bg-gray-700">
-                  {homeData.image_url ? <img src={homeData.image_url} alt="Current" className="w-full h-full object-cover" /> : <span className="text-gray-300">No Image</span>}
+
+            {/* Main Background Upload Section */}
+            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-100 dark:border-gray-600">
+                <h4 className="text-sm font-bold uppercase text-gray-700 dark:text-gray-300 mb-4">Main Background Image</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                    <ImageUpload 
+                        label="Upload New Background" 
+                        imageFile={imageFile} 
+                        imagePreview={imagePreview} 
+                        onFileChange={onFileChange} 
+                        onClear={onClearImage} 
+                    />
+                     <div className="space-y-2">
+                        <label className="block text-xs font-bold uppercase text-gray-400">Current Background</label>
+                        <div className="h-40 border rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center relative">
+                            {homeData.image_url ? (
+                                <img src={homeData.image_url} alt="Current" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-xs text-gray-400">No Image Set</span>
+                            )}
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
+            
+            <div className="space-y-4 border-t pt-4">
+               <h4 className="text-sm font-bold uppercase text-gray-500">Hero Slideshow / Gallery</h4>
+               <p className="text-xs text-gray-400">Upload multiple images to create a background slideshow.</p>
+               
+               <div className="grid grid-cols-3 gap-3">
+                   {/* Gallery Previews */}
+                   {homeGalleryPreviews.map((src, idx) => (
+                     <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border">
+                       <img src={src} className="w-full h-full object-cover" />
+                       <button 
+                         onClick={() => onRemoveHomeGalleryImage && onRemoveHomeGalleryImage(idx)}
+                         className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                       >
+                         <HiX className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+
+                   {/* Add Button */}
+                   <label className="aspect-video flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <span className="text-2xl text-gray-400">+</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Add Slide</span>
+                      <input type="file" multiple className="hidden" accept="image/*" onChange={onHomeGalleryChange} />
+                   </label>
+               </div>
+            </div>
+
             <button onClick={onSaveHome} disabled={uploading} className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 transition-colors">
               {uploading ? 'Processing...' : 'Save Home Content'}
             </button>
@@ -107,13 +158,23 @@ export default function PagesTab({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                 <ImageUpload imageFile={imageFile} imagePreview={imagePreview} onFileChange={onFileChange} onClear={onClearImage} />
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Image</label>
-                  <div className="h-40 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center dark:bg-gray-700">
-                    {aboutData.image_url ? <img src={aboutData.image_url} alt="Current" className="w-full h-full object-cover" /> : <span className="text-gray-300">No Image</span>}
-                  </div>
-                </div>
-              </div>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Image</label>
+                                <div className="h-40 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center dark:bg-gray-700 relative group">
+                                  {aboutData.image_url ? (
+                                    <>
+                                      <img src={aboutData.image_url} alt="Current" className="w-full h-full object-cover" />
+                                      <button 
+                                         onClick={() => setAboutData({ ...aboutData, image_url: "" })}
+                                         className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
+                                         title="Remove Image"
+                                       >
+                                         <HiX className="w-4 h-4" />
+                                       </button>
+                                    </>
+                                  ) : <span className="text-gray-300">No Image</span>}
+                                </div>
+                              </div>              </div>
               <button onClick={onSaveAbout} disabled={uploading} className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors">
                 {uploading ? 'Processing...' : 'Save About Content'}
               </button>

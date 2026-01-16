@@ -1,6 +1,5 @@
 "use client";
 
-import LandingBottomBar from "../components/LandingBottomBar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { HiUser } from "react-icons/hi";
@@ -107,7 +106,6 @@ export default function AboutPage() {
 
         </div>
       </main>
-      <LandingBottomBar />
     </>
   );
 }

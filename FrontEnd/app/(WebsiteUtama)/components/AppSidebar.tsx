@@ -20,7 +20,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       aria-label="Sidebar navigation"
-      className="fixed top-[64px] left-0 z-40 h-[calc(100vh-112px)] w-64 overflow-hidden bg-white text-gray-900 border-r border-gray-100"
+      className="hidden md:block fixed top-[64px] left-0 z-40 h-[calc(100vh-112px)] w-64 overflow-hidden bg-white text-gray-900 border-r border-gray-100"
     >
       <SidebarItems className="h-full p-0">
         <div className="flex flex-col h-full">

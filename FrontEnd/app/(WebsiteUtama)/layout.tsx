@@ -1,5 +1,6 @@
 import { LandingNavbar } from "./components/LandingNavbar";
 import { LiveChat } from "./components/LiveChat";
+import LandingBottomBar from "./components/LandingBottomBar";
 import PageTransition from "../components/PageTransition";
 
 export default function WebsiteLayout({
@@ -13,6 +14,7 @@ export default function WebsiteLayout({
       <PageTransition>
         {children}
       </PageTransition>
+      <LandingBottomBar />
       <LiveChat />
     </>
   );

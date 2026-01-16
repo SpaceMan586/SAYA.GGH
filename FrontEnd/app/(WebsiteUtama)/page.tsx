@@ -1,6 +1,5 @@
 "use client";
 
-import LandingBottomBar from "./components/LandingBottomBar";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -78,8 +77,6 @@ export default function Page() {
           </Link>
         </motion.div>
       </div>
-
-      <LandingBottomBar />
     </main>
   );
 }

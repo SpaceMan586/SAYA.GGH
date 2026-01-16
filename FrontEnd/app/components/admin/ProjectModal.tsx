@@ -15,6 +15,9 @@ interface ProjectModalProps {
   imagePreview: string | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearImage: () => void;
+  galleryPreviews: string[];
+  onGalleryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveGalleryImage: (index: number) => void;
   categories: string[];
 }
 
@@ -30,6 +33,9 @@ export default function ProjectModal({
   imagePreview,
   onFileChange,
   onClearImage,
+  galleryPreviews,
+  onGalleryChange,
+  onRemoveGalleryImage,
   categories
 }: ProjectModalProps) {
   if (!isOpen) return null;
@@ -44,7 +50,7 @@ export default function ProjectModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm overflow-y-auto py-10 px-4">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl dark:bg-gray-800 m-auto">
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl dark:bg-gray-800 m-auto">
         <div className="p-6 border-b flex justify-between items-center">
           <h3 className="text-xl font-bold dark:text-white uppercase tracking-tight">
             {editingProjectId ? 'Edit Project Entry' : 'New Portfolio Entry'}
@@ -52,7 +58,7 @@ export default function ProjectModal({
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><HiX className="w-6 h-6" /></button>
         </div>
         <div className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold uppercase text-gray-400">Building Name</label>
@@ -75,9 +81,6 @@ export default function ProjectModal({
                   <option value="Finished">FINISHED</option>
                 </select>
               </div>
-            </div>
-            <div className="space-y-4">
-              <ImageUpload imageFile={imageFile} imagePreview={imagePreview} onFileChange={onFileChange} onClear={onClearImage} />
               <div>
                 <label className="text-xs font-bold uppercase text-gray-400">Categories</label>
                 <div className="flex flex-wrap gap-2 mt-2">
@@ -88,11 +91,42 @@ export default function ProjectModal({
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-400">Project Narrative</label>
+                <textarea className="w-full mt-1 p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" rows={6} placeholder="Describe the design philosophy..." value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })} />
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold uppercase text-gray-400">Project Narrative</label>
-            <textarea className="w-full mt-1 p-3 bg-gray-50 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" rows={4} placeholder="Describe the design philosophy..." value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })} />
+
+            <div className="space-y-6">
+              <ImageUpload 
+                label="Thumbnail Utama"
+                imagePreview={imagePreview} 
+                onFileChange={onFileChange} 
+                onClear={onClearImage} 
+              />
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-gray-400">Gallery Proyek (Slideshow)</label>
+                <div className="grid grid-cols-3 gap-2">
+                   {galleryPreviews.map((src, idx) => (
+                     <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border">
+                       <img src={src} className="w-full h-full object-cover" />
+                       <button 
+                         onClick={() => onRemoveGalleryImage(idx)}
+                         className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                       >
+                         <HiX className="w-3 h-3" />
+                       </button>
+                     </div>
+                   ))}
+                   <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <span className="text-2xl text-gray-400">+</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Add Photo</span>
+                      <input type="file" multiple className="hidden" accept="image/*" onChange={onGalleryChange} />
+                   </label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="p-6 border-t flex gap-3 justify-end bg-gray-50 dark:bg-gray-900 rounded-b-2xl">

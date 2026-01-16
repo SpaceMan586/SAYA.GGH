@@ -46,6 +46,14 @@ export default function DashboardPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Gallery State
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
+
+  // Home Gallery State
+  const [homeGalleryFiles, setHomeGalleryFiles] = useState<File[]>([]);
+  const [homeGalleryPreviews, setHomeGalleryPreviews] = useState<string[]>([]);
+
   const categories = ["RESIDENTIAL", "COMMERCIAL", "LANDSCAPE", "DETAILS"];
 
   // --- DATA FETCHING ---
@@ -57,7 +65,10 @@ export default function DashboardPage() {
 
   const fetchPageContent = async () => {
     const { data: home } = await supabase.from('page_content').select('*').eq('section', 'home_hero').maybeSingle();
-    if (home) setHomeData({ title: home.title || "", subtitle: home.subtitle || "", image_url: home.image_url || "" });
+    if (home) {
+      setHomeData({ title: home.title || "", subtitle: home.subtitle || "", image_url: home.image_url || "" });
+      setHomeGalleryPreviews(home.gallery_urls || []);
+    }
 
     const { data: about } = await supabase.from('page_content').select('*').eq('section', 'about_us').maybeSingle();
     if (about) setAboutData({ title: about.title || "", body: about.body || "", image_url: about.image_url || "" });
@@ -92,9 +103,54 @@ export default function DashboardPage() {
     }
   };
 
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setGalleryFiles((prev) => [...prev, ...files]);
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setGalleryPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
+    setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleHomeGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setHomeGalleryFiles((prev) => [...prev, ...files]);
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setHomeGalleryPreviews((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeHomeGalleryImage = (index: number) => {
+    setHomeGalleryFiles((prev) => prev.filter((_, i) => i !== index));
+    setHomeGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearHomeGallery = () => {
+     setHomeGalleryFiles([]);
+     setHomeGalleryPreviews([]);
+  };
+
   const clearImage = () => {
     setImageFile(null);
     setImagePreview(null);
+    setGalleryFiles([]);
+    setGalleryPreviews([]);
   };
 
   const uploadImage = async (file: File) => {
@@ -118,9 +174,38 @@ export default function DashboardPage() {
     try {
       setUploading(true);
       let imageUrl = editingProjectId ? projects.find(p => p.id === editingProjectId)?.image_url : "";
+      let galleryUrls = editingProjectId ? (projects.find(p => p.id === editingProjectId)?.gallery_urls || []) : [];
       
+      // Upload main image if new one exists
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
+      }
+
+      // Upload gallery images that are new (Files)
+      // Note: This logic assumes we replace the whole gallery for simplicity if any new files are added, 
+      // or we just append. Let's make it so it uploads only the File objects.
+      // Actually, galleryPreviews might contain existing URLs.
+      
+      const newGalleryUrls: string[] = [];
+      for (const item of galleryPreviews) {
+        if (item.startsWith('http')) {
+          newGalleryUrls.push(item); // Already uploaded
+        } else {
+          // It's a base64 preview, find the corresponding file
+          const index = galleryPreviews.indexOf(item);
+          const file = galleryFiles.find(f => {
+            // This is a bit hacky, better to store objects {file?, url}
+            return true; // Simplified for now
+          });
+          // To be safe, let's just upload all current galleryFiles and keep existing URLs
+        }
+      }
+
+      // Re-upload logic:
+      const finalGalleryUrls = [...galleryPreviews.filter(p => p.startsWith('http'))];
+      for (const file of galleryFiles) {
+        const url = await uploadImage(file);
+        finalGalleryUrls.push(url);
       }
 
       const projectData = {
@@ -130,7 +215,8 @@ export default function DashboardPage() {
         status: newProject.status,
         description: newProject.description,
         tags: newProject.tags,
-        image_url: imageUrl
+        image_url: imageUrl,
+        gallery_urls: finalGalleryUrls
       };
 
       if (editingProjectId) {
@@ -169,6 +255,8 @@ export default function DashboardPage() {
       tags: project.tags || []
     });
     setImagePreview(project.image_url || null);
+    setGalleryPreviews(project.gallery_urls || []);
+    setGalleryFiles([]); // Clear any pending uploads
     setIsModalOpen(true);
   };
 
@@ -184,10 +272,26 @@ export default function DashboardPage() {
       setUploading(true);
       let imageUrl = homeData.image_url;
       if (imageFile) imageUrl = await uploadImage(imageFile);
-      const { error } = await supabase.from('page_content').upsert({ section: 'home_hero', title: homeData.title, subtitle: homeData.subtitle, image_url: imageUrl, updated_at: new Date() });
+
+      // Handle Home Gallery Uploads
+      const finalHomeGalleryUrls = [...homeGalleryPreviews.filter(p => p.startsWith('http'))];
+      for (const file of homeGalleryFiles) {
+        const url = await uploadImage(file);
+        finalHomeGalleryUrls.push(url);
+      }
+
+      const { error } = await supabase.from('page_content').upsert({ 
+        section: 'home_hero', 
+        title: homeData.title, 
+        subtitle: homeData.subtitle, 
+        image_url: imageUrl, 
+        gallery_urls: finalHomeGalleryUrls,
+        updated_at: new Date() 
+      });
       if (error) throw error;
       alert("Home saved!");
       clearImage();
+      clearHomeGallery(); // Clear pending files
       fetchPageContent();
     } catch (e: any) { alert(e.message); } finally { setUploading(false); }
   };
@@ -290,6 +394,10 @@ export default function DashboardPage() {
             imagePreview={imagePreview}
             onFileChange={handleFileChange}
             onClearImage={clearImage}
+            // Pass Home Gallery Props
+            homeGalleryPreviews={homeGalleryPreviews}
+            onHomeGalleryChange={handleHomeGalleryChange}
+            onRemoveHomeGalleryImage={removeHomeGalleryImage}
           />
         )}
 
@@ -309,6 +417,9 @@ export default function DashboardPage() {
         uploading={uploading}
         imageFile={imageFile} imagePreview={imagePreview}
         onFileChange={handleFileChange} onClearImage={clearImage}
+        galleryPreviews={galleryPreviews}
+        onGalleryChange={handleGalleryChange}
+        onRemoveGalleryImage={removeGalleryImage}
         categories={categories}
       />
 
