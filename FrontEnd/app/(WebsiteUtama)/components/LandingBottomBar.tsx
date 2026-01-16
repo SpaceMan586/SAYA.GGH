@@ -1,6 +1,6 @@
 "use client";
 
-import { FaInstagram, FaPhone, FaMapMarkerAlt, FaUser } from "react-icons/fa";
+import { FaInstagram, FaWhatsapp, FaMapMarkerAlt, FaUser } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,7 +24,7 @@ export default function LandingBottomBar() {
 
       {/* ICONS SECTION - HIDDEN ON MOBILE */}
       <div className="hidden md:flex items-center gap-16 text-lg text-black/40">
-        <FaPhone className="hover:text-black hover:scale-110 transition-all cursor-pointer" />
+        <FaWhatsapp className="hover:text-black hover:scale-110 transition-all cursor-pointer" />
         <FaInstagram className="hover:text-black hover:scale-110 transition-all cursor-pointer" />
         <FaMapMarkerAlt className="hover:text-black hover:scale-110 transition-all cursor-pointer" />
       </div>
