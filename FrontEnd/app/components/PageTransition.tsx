@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useContext, createContext } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, Variants } from "framer-motion";
 import { LayoutRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime"; 
 import { useRef } from "react";
 
@@ -27,7 +27,7 @@ export default function PageTransition({
   const pathname = usePathname();
 
   // Varian animasi yang elegan & smooth
-  const variants = {
+  const variants: Variants = {
     hidden: { 
       opacity: 0, 
       y: 20, 
