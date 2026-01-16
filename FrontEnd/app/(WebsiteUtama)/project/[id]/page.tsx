@@ -167,7 +167,7 @@ export default function ProjectDetail() {
 
                                {/* Dots Indicator */}
                                <div className="flex gap-1.5 px-2">
-                                 {images.map((_: any, idx) => (
+                                 {images.map((_: any, idx: number) => (
                                    <button 
                                      key={idx}
                                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentSlide(idx); }}
