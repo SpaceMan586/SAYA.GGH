@@ -5,50 +5,42 @@ import Link from "next/link";
 import { HiPhotograph } from "react-icons/hi";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { AnimatePresence, motion } from "framer-motion";
 
 export default function LandingHero({ customTitle, customSubtitle }: { customTitle?: string, customSubtitle?: string }) {
-  const [backgroundImages, setBackgroundImages] = useState<string[]>([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroImages, setHeroImages] = useState<{ mobile: string | null, desktop: string | null }>({ mobile: null, desktop: null });
 
   useEffect(() => {
     async function fetchBackgrounds() {
-      const { data } = await supabase.from('page_content').select('gallery_urls').eq('section', 'home_hero').maybeSingle();
-      if (data && data.gallery_urls && data.gallery_urls.length > 0) {
-        setBackgroundImages(data.gallery_urls);
+      const { data } = await supabase.from('page_content').select('hero_image_mobile, hero_image_desktop').eq('section', 'home_hero').maybeSingle();
+      if (data) {
+        setHeroImages({ mobile: data.hero_image_mobile, desktop: data.hero_image_desktop });
       }
     }
     fetchBackgrounds();
   }, []);
 
-  useEffect(() => {
-    if (backgroundImages.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % backgroundImages.length);
-    }, 5000); // Change slide every 5 seconds
-    return () => clearInterval(timer);
-  }, [backgroundImages]);
-
   return (
     <section className="bg-transparent relative overflow-hidden py-10 md:py-20 min-h-[85vh] md:min-h-[90vh] flex items-center">
       
-      {/* BACKGROUND SLIDESHOW */}
+      {/* BACKGROUND IMAGES */}
       <div className="absolute inset-0 -z-20 bg-gray-50">
-         <AnimatePresence mode="popLayout">
-            {backgroundImages.length > 0 ? (
-                <motion.img 
-                  key={currentSlide}
-                  src={backgroundImages[currentSlide]}
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 0.5, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1.5, ease: "easeInOut" }}
-                  className="w-full h-full object-cover absolute inset-0 opacity-40 md:opacity-50 grayscale-[10%] md:grayscale-[20%]"
-                />
-            ) : (
-                <div className="absolute top-0 right-0 -z-10 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
-            )}
-         </AnimatePresence>
+          {heroImages.desktop && (
+            <img 
+              src={heroImages.desktop}
+              alt="Hero background"
+              className="hidden md:block w-full h-full object-cover absolute inset-0 opacity-40 md:opacity-50 grayscale-[10%] md:grayscale-[20%]"
+            />
+          )}
+          {heroImages.mobile && (
+            <img 
+              src={heroImages.mobile}
+              alt="Hero background"
+              className="block md:hidden w-full h-full object-cover absolute inset-0 opacity-40 md:opacity-50 grayscale-[10%] md:grayscale-[20%]"
+            />
+          )}
+          {!heroImages.desktop && !heroImages.mobile && (
+            <div className="absolute top-0 right-0 -z-10 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl animate-pulse"></div>
+          )}
          {/* Gradient Overlay for Text Readability */}
          <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-white/95 via-white/80 md:via-white/60 to-transparent dark:from-gray-900/95 dark:via-gray-900/80 z-[-15]"></div>
       </div>

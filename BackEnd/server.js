@@ -23,6 +23,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/content', require('./routes/contentRoutes'));
+app.use('/api/team', require('./routes/teamRoutes'));
 // app.use('/api/news', require('./routes/newsRoutes')); // Todo
 
 // Default Route

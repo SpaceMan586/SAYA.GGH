@@ -30,8 +30,8 @@ export default function NewsDetail() {
 
   return (
     <>
-      <main className="min-h-screen bg-white pt-32 pb-24 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto">
+      <main className="min-h-screen bg-white pt-32 pb-24">
+        <div className="">
           {/* Back Button */}
           <Link href="/news" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black mb-12 transition-colors group">
             <HiArrowLeft className="group-hover:-translate-x-1 transition-transform" /> Back to News

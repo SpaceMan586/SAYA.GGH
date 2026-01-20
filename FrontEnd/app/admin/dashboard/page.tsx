@@ -29,7 +29,7 @@ export default function DashboardPage() {
   
   // Pages Content State
   const [activeSubTab, setActiveSubTab] = useState("home"); 
-  const [homeData, setHomeData] = useState({ title: "", subtitle: "", image_url: "" });
+  const [homeData, setHomeData] = useState({ title: "", subtitle: "", hero_image_desktop: "", hero_image_mobile: "" });
   const [aboutData, setAboutData] = useState({ title: "", body: "", image_url: "" });
 
   // News State
@@ -42,17 +42,19 @@ export default function DashboardPage() {
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "" });
 
-  // Image State
+  // Generic Image State (for About, News, Team modals)
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Gallery State
+  // Home Page Specific Image States
+  const [homeImageDesktopFile, setHomeImageDesktopFile] = useState<File | null>(null);
+  const [homeImageDesktopPreview, setHomeImageDesktopPreview] = useState<string | null>(null);
+  const [homeImageMobileFile, setHomeImageMobileFile] = useState<File | null>(null);
+  const [homeImageMobilePreview, setHomeImageMobilePreview] = useState<string | null>(null);
+
+  // Project Gallery State
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
-
-  // Home Gallery State
-  const [homeGalleryFiles, setHomeGalleryFiles] = useState<File[]>([]);
-  const [homeGalleryPreviews, setHomeGalleryPreviews] = useState<string[]>([]);
 
   const categories = ["RESIDENTIAL", "COMMERCIAL", "LANDSCAPE", "DETAILS"];
 
@@ -64,10 +66,14 @@ export default function DashboardPage() {
   };
 
   const fetchPageContent = async () => {
-    const { data: home } = await supabase.from('page_content').select('*').eq('section', 'home_hero').maybeSingle();
+    const { data: home } = await supabase.from('page_content').select('title, subtitle, hero_image_desktop, hero_image_mobile').eq('section', 'home_hero').maybeSingle();
     if (home) {
-      setHomeData({ title: home.title || "", subtitle: home.subtitle || "", image_url: home.image_url || "" });
-      setHomeGalleryPreviews(home.gallery_urls || []);
+      setHomeData({ 
+        title: home.title || "", 
+        subtitle: home.subtitle || "", 
+        hero_image_desktop: home.hero_image_desktop || "",
+        hero_image_mobile: home.hero_image_mobile || ""
+      });
     }
 
     const { data: about } = await supabase.from('page_content').select('*').eq('section', 'about_us').maybeSingle();
@@ -89,19 +95,25 @@ export default function DashboardPage() {
     Promise.all([fetchProjects(), fetchPageContent(), fetchNews(), fetchTeam()]).finally(() => setLoading(false));
   }, []);
 
-  // --- IMAGE HANDLERS (ORIGINAL FILE) ---
+  // --- IMAGE HANDLERS ---
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setImageFile(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
-    }
+  const createChangeHandler = (setFile: (file: File | null) => void, setPreview: (preview: string | null) => void) => 
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] || null;
+      setFile(file);
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
   };
+
+  const handleHomeDesktopFileChange = createChangeHandler(setHomeImageDesktopFile, setHomeImageDesktopPreview);
+  const handleHomeMobileFileChange = createChangeHandler(setHomeImageMobileFile, setHomeImageMobilePreview);
+  const handleFileChange = createChangeHandler(setImageFile, setImagePreview);
+
 
   const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -122,28 +134,11 @@ export default function DashboardPage() {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleHomeGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      setHomeGalleryFiles((prev) => [...prev, ...files]);
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setHomeGalleryPreviews((prev) => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
-  const removeHomeGalleryImage = (index: number) => {
-    setHomeGalleryFiles((prev) => prev.filter((_, i) => i !== index));
-    setHomeGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const clearHomeGallery = () => {
-     setHomeGalleryFiles([]);
-     setHomeGalleryPreviews([]);
+  const clearHomeImages = () => {
+     setHomeImageDesktopFile(null);
+     setHomeImageDesktopPreview(null);
+     setHomeImageMobileFile(null);
+     setHomeImageMobilePreview(null);
   };
 
   const clearImage = () => {
@@ -270,28 +265,23 @@ export default function DashboardPage() {
   const handleSaveHome = async () => {
     try {
       setUploading(true);
-      let imageUrl = homeData.image_url;
-      if (imageFile) imageUrl = await uploadImage(imageFile);
-
-      // Handle Home Gallery Uploads
-      const finalHomeGalleryUrls = [...homeGalleryPreviews.filter(p => p.startsWith('http'))];
-      for (const file of homeGalleryFiles) {
-        const url = await uploadImage(file);
-        finalHomeGalleryUrls.push(url);
-      }
+      let desktopUrl = homeData.hero_image_desktop;
+      let mobileUrl = homeData.hero_image_mobile;
+      
+      if (homeImageDesktopFile) desktopUrl = await uploadImage(homeImageDesktopFile);
+      if (homeImageMobileFile) mobileUrl = await uploadImage(homeImageMobileFile);
 
       const { error } = await supabase.from('page_content').upsert({ 
         section: 'home_hero', 
         title: homeData.title, 
         subtitle: homeData.subtitle, 
-        image_url: imageUrl, 
-        gallery_urls: finalHomeGalleryUrls,
+        hero_image_desktop: desktopUrl, 
+        hero_image_mobile: mobileUrl,
         updated_at: new Date() 
       });
       if (error) throw error;
       alert("Home saved!");
-      clearImage();
-      clearHomeGallery(); // Clear pending files
+      clearHomeImages(); // Clear pending files
       fetchPageContent();
     } catch (e: any) { alert(e.message); } finally { setUploading(false); }
   };
@@ -355,7 +345,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden font-sans">
-      <AdminSidebar activeTab={activeTab} setActiveTab={(tab) => { clearImage(); setActiveTab(tab); }} />
+      <AdminSidebar activeTab={activeTab} setActiveTab={(tab) => { clearImage(); clearHomeImages(); setActiveTab(tab); }} />
 
       <main className="flex-1 p-10 overflow-y-auto sm:ml-64 transition-all">
         {activeTab === "overview" && <OverviewTab totalProjects={projects.length} totalNews={newsList.length} />}
@@ -378,7 +368,7 @@ export default function DashboardPage() {
         {activeTab === "pages" && (
           <PagesTab 
             activeSubTab={activeSubTab} 
-            setActiveSubTab={(t) => { clearImage(); setActiveSubTab(t); }} 
+            setActiveSubTab={(t) => { clearImage(); clearHomeImages(); setActiveSubTab(t); }} 
             homeData={homeData} setHomeData={setHomeData}
             aboutData={aboutData} setAboutData={setAboutData}
             newsList={newsList}
@@ -390,14 +380,19 @@ export default function DashboardPage() {
             onAddTeam={() => { clearImage(); setIsTeamModalOpen(true); }}
             onDeleteTeam={handleDeleteTeam}
             uploading={uploading}
+            // Generic image props (for About tab)
             imageFile={imageFile}
             imagePreview={imagePreview}
             onFileChange={handleFileChange}
             onClearImage={clearImage}
-            // Pass Home Gallery Props
-            homeGalleryPreviews={homeGalleryPreviews}
-            onHomeGalleryChange={handleHomeGalleryChange}
-            onRemoveHomeGalleryImage={removeHomeGalleryImage}
+            // Home page specific image props
+            homeImageDesktopFile={homeImageDesktopFile}
+            homeImageDesktopPreview={homeImageDesktopPreview}
+            onHomeDesktopFileChange={handleHomeDesktopFileChange}
+            homeImageMobileFile={homeImageMobileFile}
+            homeImageMobilePreview={homeImageMobilePreview}
+            onHomeMobileFileChange={handleHomeMobileFileChange}
+            onClearHomeImages={clearHomeImages}
           />
         )}
 
