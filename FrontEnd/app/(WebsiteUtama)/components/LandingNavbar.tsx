@@ -49,7 +49,7 @@ export function LandingNavbar() {
       </NavbarBrand>
 
       {/* TOGGLE (MOBILE) */}
-      <NavbarToggle className="md:hidden text-black focus:ring-0 ml-auto [&>span]:hidden" />
+      <NavbarToggle className="md:hidden text-black focus:ring-0 ml-auto" />
 
       {/* DESKTOP MENU (RIGHT ALIGNED) */}
       <div className="hidden md:flex flex-1 justify-end items-center gap-16 lg:gap-10">
