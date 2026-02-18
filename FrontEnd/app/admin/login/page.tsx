@@ -23,14 +23,12 @@ export default function LoginPage() {
     <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-md p-6 shadow-xl">
         <div className="mb-4 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Admin Login
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">
-                SAYA.GGH Dashboard
-            </p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Admin Login
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">SAYA.GGH Dashboard</p>
         </div>
-        
+
         <form className="flex flex-col gap-4" onSubmit={handleLogin}>
           <div>
             <div className="mb-2 block">
@@ -57,7 +55,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          
+
           <Button type="submit" className="mt-4" color="dark">
             Sign In to Dashboard
           </Button>

@@ -1,23 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase"; 
+import { supabase } from "@/lib/supabase";
+import { useAdminContext } from "../AdminContext";
 
 // Components
-import AdminSidebar from "../../components/admin/AdminSidebar";
-import ProjectsTab from "../../components/admin/ProjectsTab";
-import PagesTab from "../../components/admin/PagesTab";
-import OverviewTab from "../../components/admin/OverviewTab";
-import TrainingTab from "../../components/admin/TrainingTab";
-import ChatInbox from "../../components/admin/ChatInbox";
-import ProjectModal from "../../components/admin/ProjectModal";
-
-import NewsModal from "../../components/admin/NewsModal";
-import TeamModal from "../../components/admin/TeamModal";
-import { HiX } from "react-icons/hi";
+import ProjectsTab from "@/components/admin/ProjectsTab";
+import PagesTab from "@/components/admin/PagesTab";
+import OverviewTab from "@/components/admin/OverviewTab";
+import TrainingTab from "@/components/admin/TrainingTab";
+import ChatInbox from "@/components/admin/ChatInbox";
+import ProjectModal from "@/components/admin/ProjectModal";
+import NewsModal from "@/components/admin/NewsModal";
+import TeamModal from "@/components/admin/TeamModal";
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const { activeTab, setActiveTab } = useAdminContext();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
@@ -25,95 +23,253 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projects, setProjects] = useState<any[]>([]);
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
-  const [newProject, setNewProject] = useState({ title: "", location: "", year: "", status: "On Going", description: "", tags: [] as string[] });
-  
+  const [editingProjectImageUrlMobile, setEditingProjectImageUrlMobile] =
+    useState<string>("");
+  const [newProject, setNewProject] = useState({
+    title: "",
+    location: "",
+    year: "",
+    status: "On Going",
+    description: "",
+    tags: [] as string[],
+  });
+
   // Pages Content State
-  const [activeSubTab, setActiveSubTab] = useState("home"); 
-  const [homeData, setHomeData] = useState({ title: "", subtitle: "", hero_image_desktop: "", hero_image_mobile: "" });
-  const [aboutData, setAboutData] = useState({ title: "", body: "", image_url: "" });
+  const [activeSubTab, setActiveSubTab] = useState("home");
+  const [homeData, setHomeData] = useState<{ slideshow_project_ids: number[] }>(
+    { slideshow_project_ids: [] },
+  );
+  const [aboutData, setAboutData] = useState({
+    title: "",
+    body: "",
+    image_url: "",
+    image_url_mobile: "",
+  });
+  const [socialLinks, setSocialLinks] = useState({
+    whatsapp: "",
+    instagram: "",
+    map: "",
+  });
+  const [aboutValues, setAboutValues] = useState<
+    { title: string; body: string }[]
+  >([]);
+  const [aboutMilestones, setAboutMilestones] = useState<
+    { year: string; label: string }[]
+  >([]);
+  const [aboutCta, setAboutCta] = useState({
+    eyebrow: "",
+    title: "",
+    body: "",
+    button_label: "",
+    link: "",
+  });
 
   // News State
   const [newsList, setNewsList] = useState<any[]>([]);
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [editingNewsImageUrl, setEditingNewsImageUrl] = useState<string>("");
+  const [editingNewsImageUrlMobile, setEditingNewsImageUrlMobile] =
+    useState<string>("");
   const [newNews, setNewNews] = useState({ title: "", date: "", content: "" });
 
   // Team State
   const [teamList, setTeamList] = useState<any[]>([]);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState<number | null>(null);
+  const [editingTeamImageUrl, setEditingTeamImageUrl] = useState<string>("");
+  const [editingTeamImageUrlMobile, setEditingTeamImageUrlMobile] =
+    useState<string>("");
   const [newTeamMember, setNewTeamMember] = useState({ name: "", role: "" });
 
-  // Generic Image State (for About, News, Team modals)
+  // Generic Image State
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // Home Page Specific Image States
-  const [homeImageDesktopFile, setHomeImageDesktopFile] = useState<File | null>(null);
-  const [homeImageDesktopPreview, setHomeImageDesktopPreview] = useState<string | null>(null);
-  const [homeImageMobileFile, setHomeImageMobileFile] = useState<File | null>(null);
-  const [homeImageMobilePreview, setHomeImageMobilePreview] = useState<string | null>(null);
+  const [imageFileMobile, setImageFileMobile] = useState<File | null>(null);
+  const [imagePreviewMobile, setImagePreviewMobile] = useState<string | null>(
+    null,
+  );
 
   // Project Gallery State
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
 
-  const categories = ["RESIDENTIAL", "COMMERCIAL", "LANDSCAPE", "DETAILS"];
+  const categories = ["residential", "public", "details"];
 
   // --- DATA FETCHING ---
 
   const fetchProjects = async () => {
-    const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (!error) setProjects(data || []);
   };
 
   const fetchPageContent = async () => {
-    const { data: home } = await supabase.from('page_content').select('title, subtitle, hero_image_desktop, hero_image_mobile').eq('section', 'home_hero').maybeSingle();
-    if (home) {
-      setHomeData({ 
-        title: home.title || "", 
-        subtitle: home.subtitle || "", 
-        hero_image_desktop: home.hero_image_desktop || "",
-        hero_image_mobile: home.hero_image_mobile || ""
-      });
+    const { data: home } = await supabase
+      .from("page_content")
+      .select("body")
+      .eq("section", "home_hero")
+      .maybeSingle();
+    if (home && home.body) {
+      try {
+        const parsed_ids = JSON.parse(home.body);
+        if (Array.isArray(parsed_ids)) {
+          setHomeData({ slideshow_project_ids: parsed_ids });
+        }
+      } catch (e) {
+        console.error("Error parsing slideshow IDs:", e);
+        setHomeData({ slideshow_project_ids: [] });
+      }
     }
 
-    const { data: about } = await supabase.from('page_content').select('*').eq('section', 'about_us').maybeSingle();
-    if (about) setAboutData({ title: about.title || "", body: about.body || "", image_url: about.image_url || "" });
+    const { data: about } = await supabase
+      .from("page_content")
+      .select("*")
+      .eq("section", "about_us")
+      .maybeSingle();
+    if (about)
+      setAboutData({
+        title: about.title || "",
+        body: about.body || "",
+        image_url: about.image_url || "",
+        image_url_mobile: about.image_url_mobile || "",
+      });
+
+    const { data: socials } = await supabase
+      .from("page_content")
+      .select("body")
+      .eq("section", "social_links")
+      .maybeSingle();
+    if (socials && socials.body) {
+      try {
+        const parsed = JSON.parse(socials.body);
+        setSocialLinks({
+          whatsapp: parsed?.whatsapp || "",
+          instagram: parsed?.instagram || "",
+          map: parsed?.map || "",
+        });
+      } catch (e) {
+        console.error("Error parsing social links:", e);
+        setSocialLinks({ whatsapp: "", instagram: "", map: "" });
+      }
+    }
+
+    const { data: values } = await supabase
+      .from("page_content")
+      .select("body")
+      .eq("section", "about_values")
+      .maybeSingle();
+    if (values?.body) {
+      try {
+        const parsed = JSON.parse(values.body);
+        if (Array.isArray(parsed)) {
+          setAboutValues(
+            parsed.map((v: any) => ({
+              title: v?.title || "",
+              body: v?.body || "",
+            })),
+          );
+        }
+      } catch (e) {
+        console.error("Error parsing about values:", e);
+      }
+    }
+
+    const { data: milestones } = await supabase
+      .from("page_content")
+      .select("body")
+      .eq("section", "about_milestones")
+      .maybeSingle();
+    if (milestones?.body) {
+      try {
+        const parsed = JSON.parse(milestones.body);
+        if (Array.isArray(parsed)) {
+          setAboutMilestones(
+            parsed.map((m: any) => ({
+              year: m?.year || "",
+              label: m?.label || "",
+            })),
+          );
+        }
+      } catch (e) {
+        console.error("Error parsing about milestones:", e);
+      }
+    }
+
+    const { data: cta } = await supabase
+      .from("page_content")
+      .select("body")
+      .eq("section", "about_cta")
+      .maybeSingle();
+    if (cta?.body) {
+      try {
+        const parsed = JSON.parse(cta.body);
+        setAboutCta({
+          eyebrow: parsed?.eyebrow || "",
+          title: parsed?.title || "",
+          body: parsed?.body || "",
+          button_label: parsed?.button_label || "",
+          link: parsed?.link || "",
+        });
+      } catch (e) {
+        console.error("Error parsing about cta:", e);
+      }
+    }
   };
 
   const fetchNews = async () => {
-    const { data, error } = await supabase.from('news').select('*').order('date', { ascending: false });
+    const { data, error } = await supabase
+      .from("news")
+      .select("*")
+      .order("date", { ascending: false });
     if (!error) setNewsList(data || []);
   };
 
   const fetchTeam = async () => {
-    const { data, error } = await supabase.from('team').select('*').order('created_at', { ascending: true });
+    const { data, error } = await supabase
+      .from("team")
+      .select("*")
+      .order("created_at", { ascending: true });
     if (!error) setTeamList(data || []);
   };
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([fetchProjects(), fetchPageContent(), fetchNews(), fetchTeam()]).finally(() => setLoading(false));
+    Promise.all([
+      fetchProjects(),
+      fetchPageContent(),
+      fetchNews(),
+      fetchTeam(),
+    ]).finally(() => setLoading(false));
   }, []);
 
   // --- IMAGE HANDLERS ---
 
-  const createChangeHandler = (setFile: (file: File | null) => void, setPreview: (preview: string | null) => void) => 
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0] || null;
-      setFile(file);
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setPreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setPreview(null);
-      }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
   };
 
-  const handleHomeDesktopFileChange = createChangeHandler(setHomeImageDesktopFile, setHomeImageDesktopPreview);
-  const handleHomeMobileFileChange = createChangeHandler(setHomeImageMobileFile, setHomeImageMobilePreview);
-  const handleFileChange = createChangeHandler(setImageFile, setImagePreview);
-
+  const handleMobileFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFileMobile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreviewMobile(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreviewMobile(null);
+    }
+  };
 
   const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -134,32 +290,35 @@ export default function DashboardPage() {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const clearHomeImages = () => {
-     setHomeImageDesktopFile(null);
-     setHomeImageDesktopPreview(null);
-     setHomeImageMobileFile(null);
-     setHomeImageMobilePreview(null);
-  };
-
-  const clearImage = () => {
+  const clearDesktopImage = () => {
     setImageFile(null);
     setImagePreview(null);
+  };
+
+  const clearMobileImage = () => {
+    setImageFileMobile(null);
+    setImagePreviewMobile(null);
+  };
+
+  const clearImages = () => {
+    clearDesktopImage();
+    clearMobileImage();
     setGalleryFiles([]);
     setGalleryPreviews([]);
   };
 
   const uploadImage = async (file: File) => {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('images')
+      .from("images")
       .upload(filePath, file);
 
     if (uploadError) throw new Error("Upload failed: " + uploadError.message);
-    
-    const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+
+    const { data } = supabase.storage.from("images").getPublicUrl(filePath);
     return data.publicUrl;
   };
 
@@ -168,264 +327,475 @@ export default function DashboardPage() {
   const handleSaveProject = async () => {
     try {
       setUploading(true);
-      let imageUrl = editingProjectId ? projects.find(p => p.id === editingProjectId)?.image_url : "";
-      let galleryUrls = editingProjectId ? (projects.find(p => p.id === editingProjectId)?.gallery_urls || []) : [];
-      
-      // Upload main image if new one exists
+      let imageUrl = editingProjectId
+        ? projects.find((p) => p.id === editingProjectId)?.image_url
+        : "";
+      let imageUrlMobile = editingProjectId
+        ? editingProjectImageUrlMobile || ""
+        : "";
+
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
-      // Upload gallery images that are new (Files)
-      // Note: This logic assumes we replace the whole gallery for simplicity if any new files are added, 
-      // or we just append. Let's make it so it uploads only the File objects.
-      // Actually, galleryPreviews might contain existing URLs.
-      
-      const newGalleryUrls: string[] = [];
-      for (const item of galleryPreviews) {
-        if (item.startsWith('http')) {
-          newGalleryUrls.push(item); // Already uploaded
-        } else {
-          // It's a base64 preview, find the corresponding file
-          const index = galleryPreviews.indexOf(item);
-          const file = galleryFiles.find(f => {
-            // This is a bit hacky, better to store objects {file?, url}
-            return true; // Simplified for now
-          });
-          // To be safe, let's just upload all current galleryFiles and keep existing URLs
-        }
+      if (imageFileMobile) {
+        imageUrlMobile = await uploadImage(imageFileMobile);
+      } else if (editingProjectId && imagePreviewMobile === null) {
+        imageUrlMobile = "";
       }
 
-      // Re-upload logic:
-      const finalGalleryUrls = [...galleryPreviews.filter(p => p.startsWith('http'))];
+      const finalGalleryUrls = [
+        ...galleryPreviews.filter((p) => p.startsWith("http")),
+      ];
       for (const file of galleryFiles) {
         const url = await uploadImage(file);
         finalGalleryUrls.push(url);
       }
 
       const projectData = {
-        title: newProject.title,
-        location: newProject.location,
-        year: newProject.year,
-        status: newProject.status,
-        description: newProject.description,
-        tags: newProject.tags,
+        ...newProject,
         image_url: imageUrl,
-        gallery_urls: finalGalleryUrls
+        image_url_mobile: imageUrlMobile,
+        gallery_urls: finalGalleryUrls,
       };
 
       if (editingProjectId) {
-        // Update
         const { error } = await supabase
-          .from('projects')
+          .from("projects")
           .update(projectData)
-          .eq('id', editingProjectId);
+          .eq("id", editingProjectId);
         if (error) throw error;
         alert("Project updated!");
       } else {
-        // Create
-        const { error } = await supabase
-          .from('projects')
-          .insert([projectData]);
+        const { error } = await supabase.from("projects").insert([projectData]);
         if (error) throw error;
         alert("Project added!");
       }
 
       setIsModalOpen(false);
       setEditingProjectId(null);
-      setNewProject({ title: "", location: "", year: "", status: "On Going", description: "", tags: [] });
-      clearImage();
+      setEditingProjectImageUrlMobile("");
+      setNewProject({
+        title: "",
+        location: "",
+        year: "",
+        status: "On Going",
+        description: "",
+        tags: [],
+      });
+      clearImages();
       fetchProjects();
-    } catch (e: any) { alert(e.message); } finally { setUploading(false); }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleEditProject = (project: any) => {
     setEditingProjectId(project.id);
+    setEditingProjectImageUrlMobile(project.image_url_mobile || "");
     setNewProject({
       title: project.title || "",
       location: project.location || "",
       year: project.year || "",
       status: project.status || "On Going",
       description: project.description || "",
-      tags: project.tags || []
+      tags: project.tags || [],
     });
     setImagePreview(project.image_url || null);
+    setImagePreviewMobile(project.image_url_mobile || null);
     setGalleryPreviews(project.gallery_urls || []);
-    setGalleryFiles([]); // Clear any pending uploads
+    setGalleryFiles([]);
     setIsModalOpen(true);
   };
 
   const handleDeleteProject = async (id: number) => {
-    if(confirm("Are you sure?")) {
-      await supabase.from('projects').delete().eq('id', id);
-      fetchProjects(); 
+    if (confirm("Are you sure?")) {
+      await supabase.from("projects").delete().eq("id", id);
+      fetchProjects();
     }
   };
 
   const handleSaveHome = async () => {
     try {
       setUploading(true);
-      let desktopUrl = homeData.hero_image_desktop;
-      let mobileUrl = homeData.hero_image_mobile;
-      
-      if (homeImageDesktopFile) desktopUrl = await uploadImage(homeImageDesktopFile);
-      if (homeImageMobileFile) mobileUrl = await uploadImage(homeImageMobileFile);
-
-      const { error } = await supabase.from('page_content').upsert({ 
-        section: 'home_hero', 
-        title: homeData.title, 
-        subtitle: homeData.subtitle, 
-        hero_image_desktop: desktopUrl, 
-        hero_image_mobile: mobileUrl,
-        updated_at: new Date() 
+      const { error } = await supabase.from("page_content").upsert({
+        section: "home_hero",
+        body: JSON.stringify(homeData.slideshow_project_ids),
+        updated_at: new Date(),
       });
       if (error) throw error;
-      alert("Home saved!");
-      clearHomeImages(); // Clear pending files
+      alert("Homepage Slideshow saved!");
       fetchPageContent();
-    } catch (e: any) { alert(e.message); } finally { setUploading(false); }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSaveAbout = async () => {
     try {
       setUploading(true);
       let imageUrl = aboutData.image_url;
+      let imageUrlMobile = aboutData.image_url_mobile;
       if (imageFile) imageUrl = await uploadImage(imageFile);
-      const { error } = await supabase.from('page_content').upsert({ section: 'about_us', title: aboutData.title, body: aboutData.body, image_url: imageUrl, updated_at: new Date() });
+      if (imageFileMobile) imageUrlMobile = await uploadImage(imageFileMobile);
+      const { error } = await supabase
+        .from("page_content")
+        .upsert({
+          section: "about_us",
+          title: aboutData.title,
+          body: aboutData.body,
+          image_url: imageUrl,
+          image_url_mobile: imageUrlMobile,
+          updated_at: new Date(),
+        });
       if (error) throw error;
       alert("About saved!");
-      clearImage();
+      clearImages();
       fetchPageContent();
-    } catch (e: any) { alert(e.message); } finally { setUploading(false); }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveSocialLinks = async () => {
+    try {
+      setUploading(true);
+      const { error } = await supabase.from("page_content").upsert({
+        section: "social_links",
+        body: JSON.stringify({
+          whatsapp: socialLinks.whatsapp || "",
+          instagram: socialLinks.instagram || "",
+          map: socialLinks.map || "",
+        }),
+        updated_at: new Date(),
+      });
+      if (error) throw error;
+      alert("Social links saved!");
+      fetchPageContent();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveAboutExtras = async () => {
+    try {
+      setUploading(true);
+      const { error: valuesError } = await supabase.from("page_content").upsert({
+        section: "about_values",
+        body: JSON.stringify(aboutValues),
+        updated_at: new Date(),
+      });
+      if (valuesError) throw valuesError;
+
+      const { error: milestonesError } = await supabase
+        .from("page_content")
+        .upsert({
+          section: "about_milestones",
+          body: JSON.stringify(aboutMilestones),
+          updated_at: new Date(),
+        });
+      if (milestonesError) throw milestonesError;
+
+      const { error: ctaError } = await supabase.from("page_content").upsert({
+        section: "about_cta",
+        body: JSON.stringify(aboutCta),
+        updated_at: new Date(),
+      });
+      if (ctaError) throw ctaError;
+
+      alert("About extras saved!");
+      fetchPageContent();
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleAddNews = async () => {
     try {
       setUploading(true);
-      let imageUrl = "";
+      let imageUrl = editingNewsImageUrl || "";
+      let imageUrlMobile = editingNewsImageUrlMobile || "";
       if (imageFile) imageUrl = await uploadImage(imageFile);
-      const { error } = await supabase.from('news').insert([{ ...newNews, image_url: imageUrl }]);
-      if (error) throw error;
-      alert("News added!");
+      if (imageFileMobile) {
+        imageUrlMobile = await uploadImage(imageFileMobile);
+      } else if (editingNewsId && imagePreviewMobile === null) {
+        imageUrlMobile = "";
+      }
+      if (editingNewsId) {
+        const { error } = await supabase
+          .from("news")
+          .update({
+            ...newNews,
+            image_url: imageUrl,
+            image_url_mobile: imageUrlMobile,
+          })
+          .eq("id", editingNewsId);
+        if (error) throw error;
+        alert("News updated!");
+      } else {
+        const { error } = await supabase
+          .from("news")
+          .insert([
+            { ...newNews, image_url: imageUrl, image_url_mobile: imageUrlMobile },
+          ]);
+        if (error) throw error;
+        alert("News added!");
+      }
       setIsNewsModalOpen(false);
+      setEditingNewsId(null);
+      setEditingNewsImageUrl("");
+      setEditingNewsImageUrlMobile("");
       setNewNews({ title: "", date: "", content: "" });
-      clearImage();
+      clearImages();
       fetchNews();
-    } catch (e: any) { alert(e.message); } finally { setUploading(false); }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDeleteNews = async (id: number) => {
-    if(confirm("Delete?")) {
-      await supabase.from('news').delete().eq('id', id);
+    if (confirm("Delete?")) {
+      await supabase.from("news").delete().eq("id", id);
       fetchNews();
     }
   };
 
-  const handleAddTeam = async () => {
+  const handleEditNews = (news: any) => {
+    clearImages();
+    setEditingNewsId(news.id);
+    setEditingNewsImageUrl(news.image_url || "");
+    setEditingNewsImageUrlMobile(news.image_url_mobile || "");
+    setNewNews({
+      title: news.title || "",
+      date: news.date || "",
+      content: news.content || "",
+    });
+    setImagePreview(news.image_url || null);
+    setImagePreviewMobile(news.image_url_mobile || null);
+    setIsNewsModalOpen(true);
+  };
+
+  const handleSaveTeam = async () => {
     try {
       setUploading(true);
-      let imageUrl = "";
-      if (imageFile) imageUrl = await uploadImage(imageFile);
-      const { error } = await supabase.from('team').insert([{ ...newTeamMember, image_url: imageUrl }]);
-      if (error) throw error;
-      alert("Team member added!");
+      let imageUrl = editingTeamId ? editingTeamImageUrl || "" : "";
+      let imageUrlMobile = editingTeamId ? editingTeamImageUrlMobile || "" : "";
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      } else if (editingTeamId && imagePreview === null) {
+        // If editing and image was cleared, remove it
+        imageUrl = "";
+      }
+      if (imageFileMobile) {
+        imageUrlMobile = await uploadImage(imageFileMobile);
+      } else if (editingTeamId && imagePreviewMobile === null) {
+        imageUrlMobile = "";
+      }
+
+      if (editingTeamId) {
+        const { error } = await supabase
+          .from("team")
+          .update({
+            ...newTeamMember,
+            image_url: imageUrl,
+            image_url_mobile: imageUrlMobile,
+          })
+          .eq("id", editingTeamId);
+        if (error) throw error;
+        alert("Team member updated!");
+      } else {
+        const { error } = await supabase
+          .from("team")
+          .insert([
+            {
+              ...newTeamMember,
+              image_url: imageUrl,
+              image_url_mobile: imageUrlMobile,
+            },
+          ]);
+        if (error) throw error;
+        alert("Team member added!");
+      }
       setIsTeamModalOpen(false);
+      setEditingTeamId(null);
+      setEditingTeamImageUrl("");
+      setEditingTeamImageUrlMobile("");
       setNewTeamMember({ name: "", role: "" });
-      clearImage();
+      clearImages();
       fetchTeam();
-    } catch (e: any) { alert(e.message); } finally { setUploading(false); }
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDeleteTeam = async (id: number) => {
-    if(confirm("Delete this team member?")) {
-      await supabase.from('team').delete().eq('id', id);
+    if (confirm("Delete this team member?")) {
+      await supabase.from("team").delete().eq("id", id);
       fetchTeam();
     }
   };
 
+  const handleEditTeam = (member: any) => {
+    clearImages();
+    setEditingTeamId(member.id);
+    setEditingTeamImageUrl(member.image_url || "");
+    setEditingTeamImageUrlMobile(member.image_url_mobile || "");
+    setNewTeamMember({
+      name: member.name || "",
+      role: member.role || "",
+    });
+    setImagePreview(member.image_url || null);
+    setImagePreviewMobile(member.image_url_mobile || null);
+    setIsTeamModalOpen(true);
+  };
+
+  const handleSubTabChange = (tab: string) => {
+    clearImages();
+    setActiveSubTab(tab);
+  };
+
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden font-sans">
-      <AdminSidebar activeTab={activeTab} setActiveTab={(tab) => { clearImage(); clearHomeImages(); setActiveTab(tab); }} />
+    <>
+      {activeTab === "overview" && (
+        <OverviewTab
+          totalProjects={projects.length}
+          totalNews={newsList.length}
+        />
+      )}
 
-      <main className="flex-1 p-10 overflow-y-auto sm:ml-64 transition-all">
-        {activeTab === "overview" && <OverviewTab totalProjects={projects.length} totalNews={newsList.length} />}
-        
-        {activeTab === "projects" && (
-          <ProjectsTab 
-            projects={projects} 
-            loading={loading} 
-            onAddClick={() => { 
-              setEditingProjectId(null);
-              setNewProject({ title: "", location: "", year: "", status: "On Going", description: "", tags: [] });
-              clearImage(); 
-              setIsModalOpen(true); 
-            }} 
-            onEdit={handleEditProject}
-            onDelete={handleDeleteProject} 
-          />
-        )}
+      {activeTab === "projects" && (
+        <ProjectsTab
+          projects={projects}
+          loading={loading}
+          onAddClick={() => {
+            setEditingProjectId(null);
+            setEditingProjectImageUrlMobile("");
+            setNewProject({
+              title: "",
+              location: "",
+              year: "",
+              status: "On Going",
+              description: "",
+              tags: [],
+            });
+            clearImages();
+            setIsModalOpen(true);
+          }}
+          onEdit={handleEditProject}
+          onDelete={handleDeleteProject}
+        />
+      )}
 
-        {activeTab === "pages" && (
-          <PagesTab 
-            activeSubTab={activeSubTab} 
-            setActiveSubTab={(t) => { clearImage(); clearHomeImages(); setActiveSubTab(t); }} 
-            homeData={homeData} setHomeData={setHomeData}
-            aboutData={aboutData} setAboutData={setAboutData}
-            newsList={newsList}
-            teamList={teamList}
-            onSaveHome={handleSaveHome}
-            onSaveAbout={handleSaveAbout}
-            onAddNews={() => { clearImage(); setIsNewsModalOpen(true); }}
-            onDeleteNews={handleDeleteNews}
-            onAddTeam={() => { clearImage(); setIsTeamModalOpen(true); }}
-            onDeleteTeam={handleDeleteTeam}
-            uploading={uploading}
-            // Generic image props (for About tab)
-            imageFile={imageFile}
-            imagePreview={imagePreview}
-            onFileChange={handleFileChange}
-            onClearImage={clearImage}
-            // Home page specific image props
-            homeImageDesktopFile={homeImageDesktopFile}
-            homeImageDesktopPreview={homeImageDesktopPreview}
-            onHomeDesktopFileChange={handleHomeDesktopFileChange}
-            homeImageMobileFile={homeImageMobileFile}
-            homeImageMobilePreview={homeImageMobilePreview}
-            onHomeMobileFileChange={handleHomeMobileFileChange}
-            onClearHomeImages={clearHomeImages}
-          />
-        )}
+      {activeTab === "pages" && (
+        <PagesTab
+          activeSubTab={activeSubTab}
+          setActiveSubTab={handleSubTabChange}
+          homeData={homeData}
+          setHomeData={setHomeData}
+          allProjects={projects} // Pass all projects down
+          aboutData={aboutData}
+          setAboutData={setAboutData}
+          socialLinks={socialLinks}
+          setSocialLinks={setSocialLinks}
+          aboutValues={aboutValues}
+          setAboutValues={setAboutValues}
+          aboutMilestones={aboutMilestones}
+          setAboutMilestones={setAboutMilestones}
+          aboutCta={aboutCta}
+          setAboutCta={setAboutCta}
+          newsList={newsList}
+          teamList={teamList}
+          onSaveHome={handleSaveHome}
+          onSaveAbout={handleSaveAbout}
+          onSaveSocialLinks={handleSaveSocialLinks}
+          onSaveAboutExtras={handleSaveAboutExtras}
+          onAddNews={() => {
+            clearImages();
+            setEditingNewsId(null);
+            setEditingNewsImageUrl("");
+            setEditingNewsImageUrlMobile("");
+            setIsNewsModalOpen(true);
+          }}
+          onEditNews={handleEditNews}
+          onDeleteNews={handleDeleteNews}
+          onAddTeam={() => {
+            clearImages();
+            setEditingTeamId(null);
+            setEditingTeamImageUrl("");
+            setEditingTeamImageUrlMobile("");
+            setIsTeamModalOpen(true);
+          }}
+          onEditTeam={handleEditTeam}
+          onDeleteTeam={handleDeleteTeam}
+          uploading={uploading}
+          imageFile={imageFile}
+          imagePreview={imagePreview}
+          onFileChange={handleFileChange}
+          onClearImage={clearDesktopImage}
+          imageFileMobile={imageFileMobile}
+          imagePreviewMobile={imagePreviewMobile}
+          onMobileFileChange={handleMobileFileChange}
+          onClearMobileImage={clearMobileImage}
+        />
+      )}
 
-        {activeTab === "training" && <TrainingTab />}
-        {activeTab === "inbox" && <ChatInbox />}
-      </main>
+      {activeTab === "training" && <TrainingTab />}
+      {activeTab === "inbox" && <ChatInbox />}
 
-      <ProjectModal 
-        isOpen={isModalOpen} 
+      <ProjectModal
+        isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setEditingProjectId(null);
         }}
-        newProject={newProject} setNewProject={setNewProject}
+        newProject={newProject}
+        setNewProject={setNewProject}
         onAdd={handleSaveProject}
         editingProjectId={editingProjectId}
         uploading={uploading}
-        imageFile={imageFile} imagePreview={imagePreview}
-        onFileChange={handleFileChange} onClearImage={clearImage}
+        imageFile={imageFile}
+        imagePreview={imagePreview}
+        onFileChange={handleFileChange}
+        onClearImage={clearDesktopImage}
+        imageFileMobile={imageFileMobile}
+        imagePreviewMobile={imagePreviewMobile}
+        onMobileFileChange={handleMobileFileChange}
+        onClearMobileImage={clearMobileImage}
         galleryPreviews={galleryPreviews}
         onGalleryChange={handleGalleryChange}
         onRemoveGalleryImage={removeGalleryImage}
         categories={categories}
       />
 
-      <NewsModal 
-        isOpen={isNewsModalOpen} 
+      <NewsModal
+        isOpen={isNewsModalOpen}
         onClose={() => setIsNewsModalOpen(false)}
-        newNews={newNews} setNewNews={setNewNews}
+        newNews={newNews}
+        setNewNews={setNewNews}
         onAdd={handleAddNews}
+        mode={editingNewsId ? "edit" : "create"}
         uploading={uploading}
-        imageFile={imageFile} imagePreview={imagePreview}
-        onFileChange={handleFileChange} onClearImage={clearImage}
+        imageFile={imageFile}
+        imagePreview={imagePreview}
+        onFileChange={handleFileChange}
+        onClearImage={clearDesktopImage}
+        imageFileMobile={imageFileMobile}
+        imagePreviewMobile={imagePreviewMobile}
+        onMobileFileChange={handleMobileFileChange}
+        onClearMobileImage={clearMobileImage}
       />
 
       <TeamModal
@@ -433,13 +803,18 @@ export default function DashboardPage() {
         onClose={() => setIsTeamModalOpen(false)}
         newTeamMember={newTeamMember}
         setNewTeamMember={setNewTeamMember}
-        onAdd={handleAddTeam}
+        onSave={handleSaveTeam}
+        mode={editingTeamId ? "edit" : "create"}
         uploading={uploading}
         imageFile={imageFile}
         imagePreview={imagePreview}
         onFileChange={handleFileChange}
-        onClearImage={clearImage}
+        onClearImage={clearDesktopImage}
+        imageFileMobile={imageFileMobile}
+        imagePreviewMobile={imagePreviewMobile}
+        onMobileFileChange={handleMobileFileChange}
+        onClearMobileImage={clearMobileImage}
       />
-    </div>
+    </>
   );
 }

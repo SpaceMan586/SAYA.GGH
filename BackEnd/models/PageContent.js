@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Schema for dynamic page content (Hero text, About Us text, Backgrounds)
 const PageContentSchema = new mongoose.Schema({
@@ -7,7 +7,7 @@ const PageContentSchema = new mongoose.Schema({
   subtitle: { type: String },
   body: { type: String },
   backgroundImage: { type: String }, // URL/Path to bg image
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('PageContent', PageContentSchema);
+module.exports = mongoose.model("PageContent", PageContentSchema);

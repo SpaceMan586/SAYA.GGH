@@ -1,26 +1,25 @@
 import type { Config } from "tailwindcss";
+import flowbite from "flowbite-react/tailwind";
 
 const config: Config = {
-  darkMode: 'class',
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./node_modules/flowbite-react/dist/**/*.js",
+    flowbite.content(),
   ],
   theme: {
     extend: {
       colors: {
-        'custom-white': '#ffffff',
+        "custom-white": "#ffffff",
       },
       fontFamily: {
-        sans: ['var(--font-montserrat)', 'sans-serif'],
+        sans: ["var(--font-montserrat)", "sans-serif"],
       },
     },
   },
-  plugins: [
-    require("flowbite/plugin"),
-  ],
+  plugins: [flowbite.plugin()],
 };
 
 export default config;

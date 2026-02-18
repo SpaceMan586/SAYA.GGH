@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const TeamSchema = new mongoose.Schema({
   name: {
@@ -18,4 +18,4 @@ const TeamSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('Team', TeamSchema);
+module.exports = mongoose.model("Team", TeamSchema);

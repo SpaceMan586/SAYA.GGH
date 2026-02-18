@@ -41,6 +41,7 @@ export default function MyPage() {
 Here are some popular components you can use:
 
 ### Buttons
+
 ```tsx
 import { Button } from "flowbite-react";
 
@@ -51,16 +52,18 @@ import { Button } from "flowbite-react";
 ```
 
 ### Cards
+
 ```tsx
 import { Card } from "flowbite-react";
 
 <Card>
   <h5 className="text-2xl font-bold">Card Title</h5>
   <p>Card content goes here</p>
-</Card>
+</Card>;
 ```
 
 ### Navbar
+
 ```tsx
 import { Navbar } from "flowbite-react";
 
@@ -73,10 +76,11 @@ import { Navbar } from "flowbite-react";
     <Navbar.Link href="/">Home</Navbar.Link>
     <Navbar.Link href="/about">About</Navbar.Link>
   </Navbar.Collapse>
-</Navbar>
+</Navbar>;
 ```
 
 ### Modal
+
 ```tsx
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
@@ -99,6 +103,7 @@ function MyComponent() {
 ```
 
 ### Forms
+
 ```tsx
 import { Label, TextInput, Checkbox } from "flowbite-react";
 
@@ -108,10 +113,11 @@ import { Label, TextInput, Checkbox } from "flowbite-react";
     <TextInput id="email" type="email" placeholder="name@example.com" />
   </div>
   <Checkbox id="remember" label="Remember me" />
-</form>
+</form>;
 ```
 
 ### Tables
+
 ```tsx
 import { Table } from "flowbite-react";
 
@@ -126,19 +132,19 @@ import { Table } from "flowbite-react";
       <Table.Cell>25</Table.Cell>
     </Table.Row>
   </Table.Body>
-</Table>
+</Table>;
 ```
 
 ### Alerts
+
 ```tsx
 import { Alert } from "flowbite-react";
 
-<Alert color="info">
-  This is an info alert
-</Alert>
+<Alert color="info">This is an info alert</Alert>;
 ```
 
 ### Dropdown
+
 ```tsx
 import { Dropdown } from "flowbite-react";
 
@@ -146,7 +152,7 @@ import { Dropdown } from "flowbite-react";
   <Dropdown.Item>Dashboard</Dropdown.Item>
   <Dropdown.Item>Settings</Dropdown.Item>
   <Dropdown.Item>Sign out</Dropdown.Item>
-</Dropdown>
+</Dropdown>;
 ```
 
 ## Project Structure
@@ -172,10 +178,7 @@ import type { Config } from "tailwindcss";
 import flowbite from "flowbite-react/tailwind";
 
 const config: Config = {
-  content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    flowbite.content(),
-  ],
+  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}", flowbite.content()],
   theme: {
     extend: {
       colors: {
@@ -183,9 +186,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    flowbite.plugin(),
-  ],
+  plugins: [flowbite.plugin()],
 };
 
 export default config;
