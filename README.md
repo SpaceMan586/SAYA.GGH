@@ -121,6 +121,27 @@ Akses CMS melalui alamat `/admin/login`.
 
 - **Kredensial Default (Demo):** `admin@saya.ggh` / `admin`
 
+## Daftar Route & Link Halaman
+
+Semua link di bawah memakai base URL lokal: `http://localhost:3000`
+
+| Halaman | Route | Link |
+| --- | --- | --- |
+| Home | `/` | [http://localhost:3000/](http://localhost:3000/) |
+| About | `/about` | [http://localhost:3000/about](http://localhost:3000/about) |
+| Project List | `/project` | [http://localhost:3000/project](http://localhost:3000/project) |
+| Project Detail (dynamic) | `/project/[id]` | Contoh: [http://localhost:3000/project/1](http://localhost:3000/project/1) |
+| News List | `/news` | [http://localhost:3000/news](http://localhost:3000/news) |
+| News Detail (dynamic) | `/news/[id]` | Contoh: [http://localhost:3000/news/1](http://localhost:3000/news/1) |
+| Admin Root (redirect) | `/admin` | [http://localhost:3000/admin](http://localhost:3000/admin) -> redirect ke `/admin/login` |
+| Admin Login | `/admin/login` | [http://localhost:3000/admin/login](http://localhost:3000/admin/login) |
+| Admin Dashboard | `/admin/dashboard` | [http://localhost:3000/admin/dashboard](http://localhost:3000/admin/dashboard) |
+| Admin Debug | `/admin/debug` | [http://localhost:3000/admin/debug](http://localhost:3000/admin/debug) |
+
+Catatan:
+- Route group Next.js seperti `/(public)` dan `/(main)` tidak muncul di URL akhir.
+- Untuk route dynamic (`[id]`), ganti `id` dengan data valid dari database (mis. `1`, `2`, dst).
+
 ---
 
 ## Struktur Proyek
