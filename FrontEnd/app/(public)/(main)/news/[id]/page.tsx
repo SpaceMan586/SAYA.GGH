@@ -7,6 +7,7 @@ import { HiArrowLeft } from "react-icons/hi";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
+import Image from "next/image";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -17,6 +18,30 @@ const formatDate = (dateString: string) => {
     month: "long",
     day: "numeric",
   });
+};
+
+const parseGalleryUrls = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (url): url is string => typeof url === "string" && url.trim().length > 0,
+    );
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (url): url is string =>
+            typeof url === "string" && url.trim().length > 0,
+        );
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
 };
 
 export default function NewsDetail() {
@@ -67,6 +92,8 @@ export default function NewsDetail() {
     );
   }
 
+  const galleryUrls = parseGalleryUrls(news.gallery_urls);
+
   return (
     <main className="min-h-screen bg-white pt-24 pb-24">
       <motion.div
@@ -106,6 +133,31 @@ export default function NewsDetail() {
               className="object-cover"
             />
           </div>
+        )}
+
+        {galleryUrls.length > 0 && (
+          <section className="mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
+              Gallery
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {galleryUrls.map((url, idx) => (
+                <div
+                  key={`${url}-${idx}`}
+                  className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100"
+                >
+                  <Image
+                    src={url}
+                    alt={`${news.title || "News"} image ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Content Body */}

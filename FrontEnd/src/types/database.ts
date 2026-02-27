@@ -22,6 +22,7 @@ export type Database = {
           tags: string[] | null;
           image_url: string | null;
           image_url_mobile: string | null;
+          gallery_urls: string[] | null;
           created_at: Timestamp | null;
         };
         Insert: Partial<Database["public"]["Tables"]["projects"]["Row"]>;
@@ -60,6 +61,7 @@ export type Database = {
           content: string | null;
           image_url: string | null;
           image_url_mobile: string | null;
+          gallery_urls: string[] | null;
           created_at: Timestamp | null;
         };
         Insert: Partial<Database["public"]["Tables"]["news"]["Row"]>;

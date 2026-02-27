@@ -14,6 +14,49 @@ import ProjectModal from "@/components/admin/ProjectModal";
 import NewsModal from "@/components/admin/NewsModal";
 import TeamModal from "@/components/admin/TeamModal";
 
+type GalleryItem = {
+  preview: string;
+  file: File | null;
+  isExisting: boolean;
+};
+
+type HomeHeroData = {
+  desktop_urls: string[];
+  mobile_urls: string[];
+};
+
+const parseGalleryUrls = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.filter(
+      (url): url is string => typeof url === "string" && url.trim().length > 0,
+    );
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (url): url is string =>
+            typeof url === "string" && url.trim().length > 0,
+        );
+      }
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+};
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.readAsDataURL(file);
+  });
+
 export default function DashboardPage() {
   const { activeTab, setActiveTab } = useAdminContext();
   const [loading, setLoading] = useState(true);
@@ -36,9 +79,16 @@ export default function DashboardPage() {
 
   // Pages Content State
   const [activeSubTab, setActiveSubTab] = useState("home");
-  const [homeData, setHomeData] = useState<{ slideshow_project_ids: number[] }>(
-    { slideshow_project_ids: [] },
-  );
+  const [, setHomeData] = useState<HomeHeroData>({
+    desktop_urls: [],
+    mobile_urls: [],
+  });
+  const [homeDesktopGalleryItems, setHomeDesktopGalleryItems] = useState<
+    GalleryItem[]
+  >([]);
+  const [homeMobileGalleryItems, setHomeMobileGalleryItems] = useState<
+    GalleryItem[]
+  >([]);
   const [aboutData, setAboutData] = useState({
     title: "",
     body: "",
@@ -72,6 +122,7 @@ export default function DashboardPage() {
   const [editingNewsImageUrlMobile, setEditingNewsImageUrlMobile] =
     useState<string>("");
   const [newNews, setNewNews] = useState({ title: "", date: "", content: "" });
+  const [newsGalleryItems, setNewsGalleryItems] = useState<GalleryItem[]>([]);
 
   // Team State
   const [teamList, setTeamList] = useState<any[]>([]);
@@ -107,21 +158,53 @@ export default function DashboardPage() {
   };
 
   const fetchPageContent = async () => {
+    const emptyHomeData: HomeHeroData = { desktop_urls: [], mobile_urls: [] };
     const { data: home } = await supabase
       .from("page_content")
       .select("body")
       .eq("section", "home_hero")
       .maybeSingle();
-    if (home && home.body) {
+    if (home?.body) {
       try {
-        const parsed_ids = JSON.parse(home.body);
-        if (Array.isArray(parsed_ids)) {
-          setHomeData({ slideshow_project_ids: parsed_ids });
+        const parsed = JSON.parse(home.body);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          const desktopUrls = parseGalleryUrls(
+            (parsed as { desktop_urls?: unknown }).desktop_urls,
+          );
+          const mobileUrls = parseGalleryUrls(
+            (parsed as { mobile_urls?: unknown }).mobile_urls,
+          );
+
+          setHomeData({ desktop_urls: desktopUrls, mobile_urls: mobileUrls });
+          setHomeDesktopGalleryItems(
+            desktopUrls.map((url) => ({
+              preview: url,
+              file: null,
+              isExisting: true,
+            })),
+          );
+          setHomeMobileGalleryItems(
+            mobileUrls.map((url) => ({
+              preview: url,
+              file: null,
+              isExisting: true,
+            })),
+          );
+        } else {
+          setHomeData(emptyHomeData);
+          setHomeDesktopGalleryItems([]);
+          setHomeMobileGalleryItems([]);
         }
       } catch (e) {
-        console.error("Error parsing slideshow IDs:", e);
-        setHomeData({ slideshow_project_ids: [] });
+        console.error("Error parsing home hero body:", e);
+        setHomeData(emptyHomeData);
+        setHomeDesktopGalleryItems([]);
+        setHomeMobileGalleryItems([]);
       }
+    } else {
+      setHomeData(emptyHomeData);
+      setHomeDesktopGalleryItems([]);
+      setHomeMobileGalleryItems([]);
     }
 
     const { data: about } = await supabase
@@ -290,6 +373,73 @@ export default function DashboardPage() {
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleHomeDesktopGalleryChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const input = e.target;
+    const files = Array.from(input.files || []);
+    if (files.length === 0) return;
+
+    const previews = await Promise.all(files.map((file) => fileToDataUrl(file)));
+    const nextItems = previews.map((preview, idx) => ({
+      preview,
+      file: files[idx],
+      isExisting: false,
+    }));
+    setHomeDesktopGalleryItems((prev) => [...prev, ...nextItems]);
+    input.value = "";
+  };
+
+  const handleHomeMobileGalleryChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const input = e.target;
+    const files = Array.from(input.files || []);
+    if (files.length === 0) return;
+
+    const previews = await Promise.all(files.map((file) => fileToDataUrl(file)));
+    const nextItems = previews.map((preview, idx) => ({
+      preview,
+      file: files[idx],
+      isExisting: false,
+    }));
+    setHomeMobileGalleryItems((prev) => [...prev, ...nextItems]);
+    input.value = "";
+  };
+
+  const removeHomeDesktopGalleryImage = (index: number) => {
+    setHomeDesktopGalleryItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeHomeMobileGalleryImage = (index: number) => {
+    setHomeMobileGalleryItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNewsGalleryChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const input = e.target;
+    const files = Array.from(input.files || []);
+    if (files.length === 0) return;
+
+    const previews = await Promise.all(files.map((file) => fileToDataUrl(file)));
+    const nextItems = previews.map((preview, idx) => ({
+      preview,
+      file: files[idx],
+      isExisting: false,
+    }));
+    setNewsGalleryItems((prev) => [...prev, ...nextItems]);
+    input.value = "";
+  };
+
+  const removeNewsGalleryImage = (index: number) => {
+    setNewsGalleryItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearNewsGallery = () => {
+    setNewsGalleryItems([]);
+  };
+
   const clearDesktopImage = () => {
     setImageFile(null);
     setImagePreview(null);
@@ -305,6 +455,7 @@ export default function DashboardPage() {
     clearMobileImage();
     setGalleryFiles([]);
     setGalleryPreviews([]);
+    clearNewsGallery();
   };
 
   const uploadImage = async (file: File) => {
@@ -419,12 +570,39 @@ export default function DashboardPage() {
   const handleSaveHome = async () => {
     try {
       setUploading(true);
+      const finalDesktopUrls: string[] = [];
+      const finalMobileUrls: string[] = [];
+
+      for (const item of homeDesktopGalleryItems) {
+        if (item.file) {
+          const uploadedUrl = await uploadImage(item.file);
+          finalDesktopUrls.push(uploadedUrl);
+        } else if (item.isExisting && item.preview.startsWith("http")) {
+          finalDesktopUrls.push(item.preview);
+        }
+      }
+
+      for (const item of homeMobileGalleryItems) {
+        if (item.file) {
+          const uploadedUrl = await uploadImage(item.file);
+          finalMobileUrls.push(uploadedUrl);
+        } else if (item.isExisting && item.preview.startsWith("http")) {
+          finalMobileUrls.push(item.preview);
+        }
+      }
+
+      const payload: HomeHeroData = {
+        desktop_urls: finalDesktopUrls,
+        mobile_urls: finalMobileUrls,
+      };
+
       const { error } = await supabase.from("page_content").upsert({
         section: "home_hero",
-        body: JSON.stringify(homeData.slideshow_project_ids),
+        body: JSON.stringify(payload),
         updated_at: new Date(),
       });
       if (error) throw error;
+      setHomeData(payload);
       alert("Homepage Slideshow saved!");
       fetchPageContent();
     } catch (e: any) {
@@ -530,23 +708,33 @@ export default function DashboardPage() {
       } else if (editingNewsId && imagePreviewMobile === null) {
         imageUrlMobile = "";
       }
+
+      const finalGalleryUrls: string[] = [];
+      for (const item of newsGalleryItems) {
+        if (item.file) {
+          const uploadedUrl = await uploadImage(item.file);
+          finalGalleryUrls.push(uploadedUrl);
+        } else if (item.isExisting && item.preview.startsWith("http")) {
+          finalGalleryUrls.push(item.preview);
+        }
+      }
+
+      const newsPayload = {
+        ...newNews,
+        image_url: imageUrl,
+        image_url_mobile: imageUrlMobile,
+        gallery_urls: finalGalleryUrls,
+      };
+
       if (editingNewsId) {
         const { error } = await supabase
           .from("news")
-          .update({
-            ...newNews,
-            image_url: imageUrl,
-            image_url_mobile: imageUrlMobile,
-          })
+          .update(newsPayload)
           .eq("id", editingNewsId);
         if (error) throw error;
         alert("News updated!");
       } else {
-        const { error } = await supabase
-          .from("news")
-          .insert([
-            { ...newNews, image_url: imageUrl, image_url_mobile: imageUrlMobile },
-          ]);
+        const { error } = await supabase.from("news").insert([newsPayload]);
         if (error) throw error;
         alert("News added!");
       }
@@ -583,6 +771,13 @@ export default function DashboardPage() {
     });
     setImagePreview(news.image_url || null);
     setImagePreviewMobile(news.image_url_mobile || null);
+    setNewsGalleryItems(
+      parseGalleryUrls(news.gallery_urls).map((url) => ({
+        preview: url,
+        file: null,
+        isExisting: true,
+      })),
+    );
     setIsNewsModalOpen(true);
   };
 
@@ -703,9 +898,12 @@ export default function DashboardPage() {
         <PagesTab
           activeSubTab={activeSubTab}
           setActiveSubTab={handleSubTabChange}
-          homeData={homeData}
-          setHomeData={setHomeData}
-          allProjects={projects} // Pass all projects down
+          homeDesktopPreviews={homeDesktopGalleryItems.map((item) => item.preview)}
+          homeMobilePreviews={homeMobileGalleryItems.map((item) => item.preview)}
+          onHomeDesktopGalleryChange={handleHomeDesktopGalleryChange}
+          onHomeMobileGalleryChange={handleHomeMobileGalleryChange}
+          onRemoveHomeDesktopImage={removeHomeDesktopGalleryImage}
+          onRemoveHomeMobileImage={removeHomeMobileGalleryImage}
           aboutData={aboutData}
           setAboutData={setAboutData}
           socialLinks={socialLinks}
@@ -796,6 +994,9 @@ export default function DashboardPage() {
         imagePreviewMobile={imagePreviewMobile}
         onMobileFileChange={handleMobileFileChange}
         onClearMobileImage={clearMobileImage}
+        galleryPreviews={newsGalleryItems.map((item) => item.preview)}
+        onGalleryChange={handleNewsGalleryChange}
+        onRemoveGalleryImage={removeNewsGalleryImage}
       />
 
       <TeamModal

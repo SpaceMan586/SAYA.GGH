@@ -2,13 +2,17 @@
 
 import ImageUpload from "./ImageUpload";
 import Image from "next/image";
+import { HiX } from "react-icons/hi";
 
 interface PagesTabProps {
   activeSubTab: string;
   setActiveSubTab: (tab: string) => void;
-  homeData: any;
-  setHomeData: (data: any) => void;
-  allProjects: any[]; // Add this prop
+  homeDesktopPreviews: string[];
+  homeMobilePreviews: string[];
+  onHomeDesktopGalleryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onHomeMobileGalleryChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveHomeDesktopImage: (index: number) => void;
+  onRemoveHomeMobileImage: (index: number) => void;
   aboutData: any;
   setAboutData: (data: any) => void;
   socialLinks: { whatsapp: string; instagram: string; map: string };
@@ -58,23 +62,17 @@ interface PagesTabProps {
   imagePreviewMobile: string | null;
   onMobileFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearMobileImage: () => void;
-
-  // Home Page Specific Props
-  homeImageDesktopFile?: File | null;
-  homeImageDesktopPreview?: string | null;
-  onHomeDesktopFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  homeImageMobileFile?: File | null;
-  homeImageMobilePreview?: string | null;
-  onHomeMobileFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onClearHomeImages?: () => void;
 }
 
 export default function PagesTab({
   activeSubTab,
   setActiveSubTab,
-  homeData,
-  setHomeData,
-  allProjects,
+  homeDesktopPreviews,
+  homeMobilePreviews,
+  onHomeDesktopGalleryChange,
+  onHomeMobileGalleryChange,
+  onRemoveHomeDesktopImage,
+  onRemoveHomeMobileImage,
   aboutData,
   setAboutData,
   socialLinks,
@@ -106,13 +104,6 @@ export default function PagesTab({
   imagePreviewMobile,
   onMobileFileChange,
   onClearMobileImage,
-  homeImageDesktopFile,
-  homeImageDesktopPreview,
-  onHomeDesktopFileChange,
-  homeImageMobileFile,
-  homeImageMobilePreview,
-  onHomeMobileFileChange,
-  onClearHomeImages,
 }: PagesTabProps) {
   return (
     <div className="space-y-6">
@@ -135,77 +126,108 @@ export default function PagesTab({
 
       {/* HOME SLIDESHOW EDIT */}
       {activeSubTab === "home" && (
-        <div className="p-8 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 max-w-3xl">
+        <div className="p-8 bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-800 dark:border-gray-700 max-w-5xl">
           <h3 className="text-xl font-bold mb-6 dark:text-white">
             Homepage Slideshow
           </h3>
-          <div className="space-y-6">
-            <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border dark:border-gray-600">
-              <h4 className="text-sm font-bold uppercase text-gray-700 dark:text-gray-300 mb-4">
-                Manage Featured Projects
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                Select which projects appear in the homepage slideshow. The
-                order is based on the selection order.
-              </p>
+          <div className="space-y-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Upload multiple images for desktop and mobile slideshow. Order
+              follows upload/removal sequence.
+            </p>
 
-              <div className="grid grid-cols-2 gap-6">
-                {/* All Projects List */}
-                <div className="space-y-2">
-                  <h5 className="text-xs font-bold uppercase text-gray-400">
-                    All Projects
-                  </h5>
-                  <div className="h-64 overflow-y-auto border rounded-lg p-2 space-y-1 bg-white dark:bg-gray-800">
-                    {allProjects.map((p) => {
-                      const isSelected =
-                        homeData.slideshow_project_ids.includes(p.id);
-                      return (
-                        <button
-                          key={p.id}
-                          onClick={() => {
-                            if (isSelected) {
-                              setHomeData({
-                                slideshow_project_ids:
-                                  homeData.slideshow_project_ids.filter(
-                                    (id: number) => id !== p.id,
-                                  ),
-                              });
-                            } else {
-                              setHomeData({
-                                slideshow_project_ids: [
-                                  ...homeData.slideshow_project_ids,
-                                  p.id,
-                                ],
-                              });
-                            }
-                          }}
-                          className={`w-full text-left p-2 rounded-md text-sm transition-colors ${isSelected ? "bg-blue-100 dark:bg-blue-900/50" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
-                        >
-                          {p.title}
-                        </button>
-                      );
-                    })}
-                  </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold uppercase text-gray-700 dark:text-gray-300">
+                    Desktop Slides
+                  </h4>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    {homeDesktopPreviews.length} images
+                  </span>
                 </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {homeDesktopPreviews.map((src, idx) => (
+                    <div
+                      key={`${src}-${idx}`}
+                      className="relative aspect-video rounded-lg overflow-hidden border bg-gray-50"
+                    >
+                      <Image
+                        src={src}
+                        alt={`Desktop slide ${idx + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 250px"
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <button
+                        onClick={() => onRemoveHomeDesktopImage(idx)}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600"
+                      >
+                        <HiX className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-video flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-600 dark:hover:bg-gray-700">
+                    <span className="text-2xl text-gray-400">+</span>
+                    <span className="text-[10px] font-bold uppercase text-gray-400">
+                      Add Desktop
+                    </span>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      accept="image/*"
+                      onChange={onHomeDesktopGalleryChange}
+                    />
+                  </label>
+                </div>
+              </div>
 
-                {/* Selected Projects List */}
-                <div className="space-y-2">
-                  <h5 className="text-xs font-bold uppercase text-gray-400">
-                    Selected for Slideshow
-                  </h5>
-                  <div className="h-64 border rounded-lg p-2 space-y-1 bg-white dark:bg-gray-800">
-                    {homeData.slideshow_project_ids.map((id: number) => {
-                      const project = allProjects.find((p) => p.id === id);
-                      return project ? (
-                        <div
-                          key={id}
-                          className="w-full text-left p-2 rounded-md text-sm bg-gray-50 dark:bg-gray-900/50"
-                        >
-                          {project.title}
-                        </div>
-                      ) : null;
-                    })}
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold uppercase text-gray-700 dark:text-gray-300">
+                    Mobile Slides
+                  </h4>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">
+                    {homeMobilePreviews.length} images
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {homeMobilePreviews.map((src, idx) => (
+                    <div
+                      key={`${src}-${idx}`}
+                      className="relative aspect-[9/16] rounded-lg overflow-hidden border bg-gray-50"
+                    >
+                      <Image
+                        src={src}
+                        alt={`Mobile slide ${idx + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 150px"
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <button
+                        onClick={() => onRemoveHomeMobileImage(idx)}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600"
+                      >
+                        <HiX className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-[9/16] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-600 dark:hover:bg-gray-700">
+                    <span className="text-2xl text-gray-400">+</span>
+                    <span className="text-[10px] font-bold uppercase text-gray-400">
+                      Add Mobile
+                    </span>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      accept="image/*"
+                      onChange={onHomeMobileGalleryChange}
+                    />
+                  </label>
                 </div>
               </div>
             </div>

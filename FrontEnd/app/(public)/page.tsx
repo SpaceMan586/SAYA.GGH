@@ -17,9 +17,15 @@ export default function Page() {
     let cancelled = false;
     const maxAttempts = 3;
     const baseDelayMs = 1000;
+    const parseUrlArray = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
+      return value.filter(
+        (url): url is string => typeof url === "string" && url.trim().length > 0,
+      );
+    };
 
-    async function fetchSlideshowProjects(attempt: number) {
-      // 1. Fetch the hero content which contains the list of project IDs
+    async function fetchSlideshowContent(attempt: number) {
+      // 1. Fetch hero slideshow content
       const { data: heroData, error: heroError } = await supabase
         .from("page_content")
         .select("body")
@@ -59,8 +65,48 @@ export default function Page() {
       }
 
       try {
-        const projectIds = JSON.parse(heroData.body);
-        if (!Array.isArray(projectIds) || projectIds.length === 0) {
+        const parsedBody = JSON.parse(heroData.body);
+
+        // New format: { desktop_urls: string[], mobile_urls: string[] }
+        if (
+          parsedBody &&
+          typeof parsedBody === "object" &&
+          !Array.isArray(parsedBody)
+        ) {
+          const desktopUrls = parseUrlArray(
+            (parsedBody as { desktop_urls?: unknown }).desktop_urls,
+          );
+          const mobileUrls = parseUrlArray(
+            (parsedBody as { mobile_urls?: unknown }).mobile_urls,
+          );
+
+          const totalSlides = Math.max(desktopUrls.length, mobileUrls.length);
+          if (totalSlides === 0) {
+            if (!cancelled) {
+              setStatus("missing");
+              scheduleRetry(attempt);
+            }
+            return;
+          }
+
+          const normalizedSlides = Array.from(
+            { length: totalSlides },
+            (_, index) => ({
+              id: index + 1,
+              image_url: desktopUrls[index] || mobileUrls[index] || "",
+              image_url_mobile: mobileUrls[index] || desktopUrls[index] || "",
+            }),
+          ).filter((slide) => slide.image_url || slide.image_url_mobile);
+
+          if (!cancelled) {
+            setSlides(normalizedSlides);
+            setStatus(normalizedSlides.length > 0 ? "ready" : "missing");
+          }
+          return;
+        }
+
+        // Legacy format: body is array of project ids
+        if (!Array.isArray(parsedBody) || parsedBody.length === 0) {
           if (!cancelled) {
             setStatus("missing");
             scheduleRetry(attempt);
@@ -68,11 +114,11 @@ export default function Page() {
           return;
         }
 
-        // 2. Fetch the projects corresponding to the IDs
+        // 2. Fetch projects corresponding to IDs
         const { data: projectData, error: projectError } = await supabase
           .from("projects")
           .select("id, title, location, image_url, image_url_mobile")
-          .in("id", projectIds);
+          .in("id", parsedBody);
 
         if (projectError) {
           console.error(
@@ -86,17 +132,17 @@ export default function Page() {
           return;
         }
 
-        // 3. Reorder the fetched projects to match the admin-defined order
-        const orderedSlides = projectIds
+        // 3. Reorder fetched projects to match admin-defined order
+        const orderedSlides = parsedBody
           .map((id) => projectData.find((p) => p.id === id))
-          .filter(Boolean); // Filter out any nulls if a project was deleted
+          .filter(Boolean);
 
         if (!cancelled) {
           setSlides(orderedSlides);
           setStatus(orderedSlides.length > 0 ? "ready" : "missing");
         }
       } catch (e) {
-        console.error("Error parsing slideshow project IDs:", e);
+        console.error("Error parsing home hero body:", e);
         if (!cancelled) {
           setStatus("error");
           scheduleRetry(attempt);
@@ -109,13 +155,13 @@ export default function Page() {
       const delay = baseDelayMs * Math.pow(2, attempt);
       setTimeout(() => {
         if (!cancelled) {
-          fetchSlideshowProjects(attempt + 1);
+          fetchSlideshowContent(attempt + 1);
         }
       }, delay);
     }
 
     setStatus("loading");
-    fetchSlideshowProjects(0);
+    fetchSlideshowContent(0);
     return () => {
       cancelled = true;
     };
@@ -166,11 +212,11 @@ export default function Page() {
             Slideshow unavailable
           </p>
           <h1 className="text-3xl md:text-5xl font-semibold tracking-tight">
-            Featured projects are being prepared
+            Homepage slides are being prepared
           </h1>
           <p className="mt-4 max-w-xl text-sm text-white/70">
-            The homepage slideshow isn&apos;t configured yet. Check back soon or
-            browse our projects directly.
+            The homepage slideshow isn&apos;t configured yet. Check back soon
+            or browse our projects directly.
           </p>
           <Link
             href="/project"
