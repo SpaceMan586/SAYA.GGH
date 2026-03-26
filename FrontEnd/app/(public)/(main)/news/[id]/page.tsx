@@ -1,16 +1,13 @@
-"use client";
-
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { HiArrowLeft } from "react-icons/hi";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import Image from "next/image";
+import Link from "next/link";
+import { HiArrowLeft } from "react-icons/hi";
+import ResponsiveImage from "@/components/shared/ResponsiveImage";
+import { supabaseServer } from "@/lib/supabaseServer";
+import type { News } from "@/src/types/db";
 
-// Helper function to format date
-const formatDate = (dateString: string) => {
+export const dynamic = "force-dynamic";
+
+const formatDate = (dateString: string | null) => {
   if (!dateString) return "Date not available";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
@@ -44,86 +41,80 @@ const parseGalleryUrls = (value: unknown): string[] => {
   return [];
 };
 
-export default function NewsDetail() {
-  const params = useParams();
-  const id = params?.id;
+const parseNewsId = (value: string): number | null => {
+  const id = Number(value);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  return id;
+};
 
-  const [news, setNews] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const fetchNewsById = async (id: number): Promise<News | null> => {
+  const { data, error } = await supabaseServer
+    .from("news")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
-  useEffect(() => {
-    async function getNews() {
-      if (!id) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("news")
-        .select("*")
-        .eq("id", id)
-        .single();
-      if (!error) setNews(data);
-      setLoading(false);
-    }
-    getNews();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm font-bold tracking-widest uppercase animate-pulse">
-          Loading Article...
-        </p>
-      </div>
-    );
+  if (error || !data) {
+    return null;
   }
 
+  return data;
+};
+
+const renderNotFound = () => (
+  <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white">
+    <p className="text-lg font-bold uppercase tracking-widest text-red-500">
+      Article Not Found
+    </p>
+    <Link
+      href="/news"
+      className="group inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-black"
+    >
+      <HiArrowLeft /> Back to News
+    </Link>
+  </div>
+);
+
+export default async function NewsDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: rawId } = await params;
+  const newsId = parseNewsId(rawId);
+  if (!newsId) {
+    return renderNotFound();
+  }
+
+  const news = await fetchNewsById(newsId);
   if (!news) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
-        <p className="text-lg font-bold tracking-widest text-red-500 uppercase">
-          Article Not Found
-        </p>
-        <Link
-          href="/news"
-          className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors group"
-        >
-          <HiArrowLeft /> Back to News
-        </Link>
-      </div>
-    );
+    return renderNotFound();
   }
 
   const galleryUrls = parseGalleryUrls(news.gallery_urls);
 
   return (
-    <main className="min-h-screen bg-white pt-24 pb-24">
-      <motion.div
-        className="max-w-4xl mx-auto px-6 md:px-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* Back Button */}
+    <main className="min-h-screen bg-white pb-24 pt-24">
+      <div className="mx-auto max-w-4xl px-6 md:px-8">
         <Link
           href="/news"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 mb-12 transition-colors group"
+          className="group mb-12 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 transition-colors hover:text-gray-900"
         >
-          <HiArrowLeft className="group-hover:-translate-x-1 transition-transform" />
+          <HiArrowLeft className="transition-transform group-hover:-translate-x-1" />
           Back to Journal
         </Link>
 
-        {/* Article Header */}
         <header className="mb-12">
-          <p className="text-sm font-semibold uppercase tracking-wider text-gray-400 mb-3">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
             {formatDate(news.date)}
           </p>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tighter text-gray-900 leading-tight">
+          <h1 className="text-4xl font-bold leading-tight tracking-tighter text-gray-900 md:text-5xl">
             {news.title}
           </h1>
         </header>
 
-        {/* Featured Image */}
         {news.image_url && (
-          <div className="w-full aspect-video rounded-2xl overflow-hidden mb-12 bg-gray-100 shadow-lg relative">
+          <div className="relative mb-12 aspect-video w-full overflow-hidden rounded-2xl bg-gray-100 shadow-lg">
             <ResponsiveImage
               desktopSrc={news.image_url}
               mobileSrc={news.image_url_mobile || news.image_url}
@@ -137,14 +128,14 @@ export default function NewsDetail() {
 
         {galleryUrls.length > 0 && (
           <section className="mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-400">
               Gallery
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               {galleryUrls.map((url, idx) => (
                 <div
                   key={`${url}-${idx}`}
-                  className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100"
+                  className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100"
                 >
                   <Image
                     src={url}
@@ -160,11 +151,10 @@ export default function NewsDetail() {
           </section>
         )}
 
-        {/* Content Body */}
         <article className="prose prose-lg lg:prose-xl max-w-none font-serif text-gray-800 prose-headings:font-sans prose-headings:font-bold prose-headings:tracking-tight">
           {news.content}
         </article>
-      </motion.div>
+      </div>
     </main>
   );
 }
