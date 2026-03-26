@@ -3,20 +3,52 @@
 import { Button, Card, Label, TextInput } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic login dummy
-    if (email === "admin@saya.ggh" && password === "admin") {
-      router.push("/admin/dashboard");
-    } else {
-      alert("Invalid credentials! (Try: admin@saya.ggh / admin)");
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+      setIsSubmitting(false);
+      return;
     }
+
+    const accessToken = data.session?.access_token;
+    const refreshToken = data.session?.refresh_token;
+    if (!accessToken || !refreshToken) {
+      setErrorMessage("Missing session token after login");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const sessionCookieResponse = await fetch("/api/admin/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken, refreshToken }),
+    });
+    if (!sessionCookieResponse.ok) {
+      setErrorMessage("Failed to establish secure admin session");
+      setIsSubmitting(false);
+      return;
+    }
+
+    router.replace("/admin/dashboard");
+    router.refresh();
   };
 
   return (
@@ -37,7 +69,7 @@ export default function LoginPage() {
             <TextInput
               id="email"
               type="email"
-              placeholder="admin@saya.ggh"
+              placeholder="you@example.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -56,8 +88,17 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button type="submit" className="mt-4" color="dark">
-            Sign In to Dashboard
+          {errorMessage ? (
+            <p className="text-sm text-red-600">{errorMessage}</p>
+          ) : null}
+
+          <Button
+            type="submit"
+            className="mt-4"
+            color="dark"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing In..." : "Sign In to Dashboard"}
           </Button>
         </form>
       </Card>

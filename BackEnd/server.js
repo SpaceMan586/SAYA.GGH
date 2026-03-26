@@ -7,14 +7,34 @@ const connectDB = require("./config/db");
 // Load env vars
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("Missing required environment variable: JWT_SECRET");
+}
+
 // Connect to database
 connectDB();
 
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  }),
+);
+app.use(express.json({ limit: process.env.JSON_LIMIT || "100kb" }));
 
 // Static Folder for Uploads (Make sure images are accessible)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

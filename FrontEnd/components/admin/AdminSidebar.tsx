@@ -13,11 +13,13 @@ import Image from "next/image";
 interface AdminSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onSignOut: () => Promise<void>;
 }
 
 export default function AdminSidebar({
   activeTab,
   setActiveTab,
+  onSignOut,
 }: AdminSidebarProps) {
   return (
     <aside
@@ -89,6 +91,14 @@ export default function AdminSidebar({
           </li>
         </ul>
         <div className="mt-auto pt-4 border-t">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex w-full items-center p-3 text-gray-500 rounded-xl hover:bg-gray-100"
+          >
+            <HiArrowSmRight className="w-5 h-5" />
+            <span className="ml-3">Sign Out</span>
+          </button>
           <Link
             href="/"
             className="flex items-center p-3 text-gray-500 rounded-xl hover:bg-gray-100"

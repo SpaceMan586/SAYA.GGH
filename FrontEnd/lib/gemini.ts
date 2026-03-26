@@ -1,11 +1,16 @@
+import "server-only";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Ambil API Key dari .env.local
-const genAI = new GoogleGenerativeAI(
-  process.env.AIzaSyDBlYXJx1AY17XVInOQu_TQ9C6jIjcmFuc || "",
-);
+const getGeminiClient = () => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY environment variable");
+  }
+  return new GoogleGenerativeAI(apiKey);
+};
 
 export async function generateProjectDescription(title: string) {
+  const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Versi cepat & gratis
 
   const prompt = `Tuliskan deskripsi arsitektur singkat dan profesional untuk proyek bernama "${title}" dalam Bahasa Indonesia. Fokus pada estetika dan fungsi.`;

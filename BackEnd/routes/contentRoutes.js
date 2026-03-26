@@ -3,8 +3,17 @@ const router = express.Router();
 const PageContent = require("../models/PageContent");
 const multer = require("multer");
 const path = require("path");
+const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 // Multer Config
+const allowedImageMimeTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const maxUploadBytes = Number(process.env.MAX_UPLOAD_BYTES || 5 * 1024 * 1024);
+
 const storage = multer.diskStorage({
   destination(req, file, cb) {
     cb(null, "uploads/");
@@ -16,7 +25,21 @@ const storage = multer.diskStorage({
     );
   },
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: {
+    fileSize:
+      Number.isFinite(maxUploadBytes) && maxUploadBytes > 0
+        ? maxUploadBytes
+        : 5 * 1024 * 1024,
+  },
+  fileFilter(req, file, cb) {
+    if (allowedImageMimeTypes.has(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(new Error("Only image uploads are allowed"));
+  },
+});
 
 // @desc    Get content by section
 // @route   GET /api/content/:section
@@ -42,7 +65,12 @@ router.get("/:section", async (req, res) => {
 
 // @desc    Update content
 // @route   POST /api/content/:section
-router.post("/:section", upload.single("image"), async (req, res) => {
+router.post(
+  "/:section",
+  protect,
+  adminOnly,
+  upload.single("image"),
+  async (req, res) => {
   try {
     const { title, subtitle, body } = req.body;
     const backgroundImage = req.file
@@ -62,6 +90,7 @@ router.post("/:section", upload.single("image"), async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+  },
+);
 
 module.exports = router;

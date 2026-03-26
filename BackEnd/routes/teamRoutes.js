@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Team = require("../models/Team");
+const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 // @route   GET api/team
 // @desc    Get all team members
@@ -18,7 +19,7 @@ router.get("/", async (req, res) => {
 // @route   POST api/team
 // @desc    Add a new team member
 // @access  Private
-router.post("/", async (req, res) => {
+router.post("/", protect, adminOnly, async (req, res) => {
   const { name, role, image_url } = req.body;
 
   try {
@@ -39,14 +40,14 @@ router.post("/", async (req, res) => {
 // @route   DELETE api/team/:id
 // @desc    Delete a team member
 // @access  Private
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, adminOnly, async (req, res) => {
   try {
     let teamMember = await Team.findById(req.params.id);
 
     if (!teamMember)
       return res.status(404).json({ msg: "Team member not found" });
 
-    await Team.findByIdAndRemove(req.params.id);
+    await Team.findByIdAndDelete(req.params.id);
 
     res.json({ msg: "Team member removed" });
   } catch (err) {

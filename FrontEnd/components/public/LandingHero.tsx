@@ -20,16 +20,45 @@ export default function LandingHero({
   }>({ mobile: null, desktop: null });
 
   useEffect(() => {
+    const parseUrlArray = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
+      return value.filter(
+        (url): url is string => typeof url === "string" && url.trim().length > 0,
+      );
+    };
+
     async function fetchBackgrounds() {
       const { data } = await supabase
         .from("page_content")
-        .select("hero_image_mobile, hero_image_desktop")
+        .select("body")
         .eq("section", "home_hero")
         .maybeSingle();
-      if (data) {
+
+      if (data?.body) {
+        let desktop = "";
+        let mobile = "";
+
+        try {
+          const parsed = JSON.parse(data.body);
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+            const desktopUrls = parseUrlArray(
+              (parsed as { desktop_urls?: unknown }).desktop_urls,
+            );
+            const mobileUrls = parseUrlArray(
+              (parsed as { mobile_urls?: unknown }).mobile_urls,
+            );
+
+            desktop = desktopUrls[0] || mobileUrls[0] || "";
+            mobile = mobileUrls[0] || desktopUrls[0] || "";
+          }
+        } catch {
+          desktop = "";
+          mobile = "";
+        }
+
         setHeroImages({
-          mobile: data.hero_image_mobile,
-          desktop: data.hero_image_desktop,
+          mobile: mobile || null,
+          desktop: desktop || null,
         });
       }
     }

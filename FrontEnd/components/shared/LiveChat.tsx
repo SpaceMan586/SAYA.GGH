@@ -37,15 +37,43 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const upsertSessionCookie = async (existingSessionId?: string | null) => {
+    const response = await fetch("/api/chat/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        existingSessionId ? { sessionId: existingSessionId } : {},
+      ),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to establish chat session");
+    }
+
+    const data = (await response.json()) as { sessionId?: string };
+    if (!data.sessionId) {
+      throw new Error("Missing chat session id");
+    }
+    return data.sessionId;
+  };
+
   /* ===================== INIT SESSION ===================== */
   useEffect(() => {
     if (!isOpen) return; // Only initialize if chat is open
 
     const existingSession = localStorage.getItem("chat_session_id");
-    if (existingSession) {
-      setSessionId(existingSession);
-      fetchHistory(existingSession);
-    }
+    if (!existingSession) return;
+
+    upsertSessionCookie(existingSession)
+      .then((boundSessionId) => {
+        setSessionId(boundSessionId);
+        localStorage.setItem("chat_session_id", boundSessionId);
+        fetchHistory(boundSessionId);
+      })
+      .catch(() => {
+        localStorage.removeItem("chat_session_id");
+        setSessionId(null);
+      });
   }, [isOpen]); // Depend on isOpen
 
   /* ===================== REALTIME LISTENER ===================== */
@@ -91,6 +119,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
           if (payload.new.status === "closed") {
             localStorage.removeItem("chat_session_id");
             setSessionId(null);
+            fetch("/api/chat/session", { method: "DELETE" }).catch(() => {});
             setMessages((prev) => [
               ...prev,
               {
@@ -166,17 +195,9 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
       let currentSessionId = sessionId;
 
       if (!currentSessionId) {
-        const { data } = await supabase
-          .from("chat_sessions")
-          .insert([{ status: "ai" }])
-          .select()
-          .single();
-
-        if (data) {
-          currentSessionId = data.id;
-          setSessionId(data.id);
-          localStorage.setItem("chat_session_id", data.id);
-        }
+        currentSessionId = await upsertSessionCookie();
+        setSessionId(currentSessionId);
+        localStorage.setItem("chat_session_id", currentSessionId);
       }
 
       const response = await fetch("/api/chat", {
@@ -187,6 +208,10 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
           sessionId: currentSessionId,
         }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
 
       const data = await response.json();
 
@@ -200,6 +225,16 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
           },
         ]);
       }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-error`,
+          role: "bot",
+          content:
+            "Terjadi kendala saat memproses pesan. Coba lagi dalam beberapa saat.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }

@@ -34,6 +34,7 @@ export type Database = {
           title: string | null;
           subtitle: string | null;
           body: string | null;
+          background_image: string | null;
           image_url: string | null;
           image_url_mobile: string | null;
           updated_at: Timestamp | null;
@@ -44,10 +45,11 @@ export type Database = {
       team: {
         Row: {
           id: number;
-          name: string;
-          role: string | null;
+          name: string | null;
+          role: string;
           image_url: string | null;
           image_url_mobile: string | null;
+          images: Json | null;
           created_at: Timestamp | null;
         };
         Insert: Partial<Database["public"]["Tables"]["team"]["Row"]>;
@@ -62,6 +64,7 @@ export type Database = {
           image_url: string | null;
           image_url_mobile: string | null;
           gallery_urls: string[] | null;
+          images: Json | null;
           created_at: Timestamp | null;
         };
         Insert: Partial<Database["public"]["Tables"]["news"]["Row"]>;
@@ -69,9 +72,10 @@ export type Database = {
       };
       chat_sessions: {
         Row: {
-          id: number;
+          id: string;
           status: string | null;
           created_at: Timestamp | null;
+          user_id: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["chat_sessions"]["Row"]>;
         Update: Partial<Database["public"]["Tables"]["chat_sessions"]["Row"]>;
@@ -79,7 +83,7 @@ export type Database = {
       chat_messages: {
         Row: {
           id: number;
-          session_id: number | null;
+          session_id: string | null;
           content: string;
           created_at: Timestamp | null;
         };
