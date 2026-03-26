@@ -7,16 +7,25 @@ import {
   FaUser,
 } from "react-icons/fa";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LiveChat } from "@/components/shared/LiveChat"; // Import LiveChat
 import { supabase } from "@/lib/supabase";
+
+const LiveChat = dynamic(
+  () => import("@/components/shared/LiveChat").then((mod) => mod.LiveChat),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 export default function LandingBottomBar() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const isAdminPage = pathname?.startsWith("/admin");
   const [isChatOpen, setIsChatOpen] = useState(false); // State for chat visibility
+  const [shouldRenderChat, setShouldRenderChat] = useState(false);
   const [socialLinks, setSocialLinks] = useState({
     whatsapp: "",
     instagram: "",
@@ -117,14 +126,19 @@ export default function LandingBottomBar() {
       {/* RIGHT SECTION (REACH US - Not Full Width on Mobile) */}
       <div className="flex items-center justify-end">
         <button
-          onClick={() => setIsChatOpen(true)} // Open chat on click
+          onClick={() => {
+            setShouldRenderChat(true);
+            setIsChatOpen(true);
+          }}
           className="bg-gray-900 hover:bg-black text-white text-[9px] md:text-[10px] font-semibold tracking-[0.3em] md:tracking-[0.4em] px-5 py-2.5 md:px-10 md:py-3 uppercase transition-all active:scale-95 rounded-sm flex items-center justify-center gap-2"
         >
           CHAT US
         </button>
       </div>
       {/* Render LiveChat component */}
-      <LiveChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      {shouldRenderChat ? (
+        <LiveChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      ) : null}
     </div>
   );
 }
