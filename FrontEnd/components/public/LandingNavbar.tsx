@@ -1,37 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { HiMenu, HiX } from "react-icons/hi";
+import { useState } from "react";
 import Image from "next/image";
+
+const navItems = [
+  { href: "/", label: "HOME" },
+  { href: "/about", label: "ABOUT" },
+  { href: "/project", label: "PROJECT" },
+  { href: "/news", label: "NEWS" },
+];
 
 export function LandingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const pathname = usePathname();
-  const isAdminPage = pathname?.startsWith("/admin");
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    if (isOpen) {
-      setIsOpen(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  // Prevent scrolling when mobile menu is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
-
-  if (isAdminPage) return null;
 
   return (
     <>
@@ -50,30 +31,15 @@ export function LandingNavbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center justify-end flex-1 gap-10">
-            <Link
-              href="/"
-              className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/project"
-              className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
-            >
-              PROJECT
-            </Link>
-            <Link
-              href="/news"
-              className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
-            >
-              NEWS
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,7 +49,9 @@ export function LandingNavbar() {
               className="text-black"
               aria-label="Toggle menu"
             >
-              {isOpen ? <HiX size={28} /> : <HiMenu size={28} />}
+              <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
+                {isOpen ? "CLOSE" : "MENU"}
+              </span>
             </button>
           </div>
         </div>
@@ -94,30 +62,16 @@ export function LandingNavbar() {
         <div className="fixed left-0 right-0 top-20 z-[60] px-6">
           <div className="mx-auto max-w-sm rounded-2xl border border-black/10 bg-white/95 shadow-xl backdrop-blur-sm">
             <div className="flex flex-col items-center gap-6 py-6">
-            <Link
-              href="/"
-              className="text-lg tracking-[0.3em] uppercase text-black"
-            >
-              HOME
-            </Link>
-            <Link
-              href="/about"
-              className="text-lg tracking-[0.3em] uppercase text-black"
-            >
-              ABOUT
-            </Link>
-            <Link
-              href="/project"
-              className="text-lg tracking-[0.3em] uppercase text-black"
-            >
-              PROJECT
-            </Link>
-            <Link
-              href="/news"
-              className="text-lg tracking-[0.3em] uppercase text-black"
-            >
-              NEWS
-            </Link>
+              {navItems.map((item) => (
+                <Link
+                  key={`mobile-${item.href}`}
+                  href={item.href}
+                  className="text-lg tracking-[0.3em] uppercase text-black"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

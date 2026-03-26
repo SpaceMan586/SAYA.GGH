@@ -1,10 +1,9 @@
 import NewsGridClient from "@/components/public/NewsGridClient";
+import { unstable_cache } from "next/cache";
 import { supabaseServer } from "@/lib/supabaseServer";
 import type { News } from "@/src/types/db";
 
-export const dynamic = "force-dynamic";
-
-const fetchNewsList = async (): Promise<News[]> => {
+const fetchNewsListUncached = async (): Promise<News[]> => {
   const { data, error } = await supabaseServer
     .from("news")
     .select("*")
@@ -16,6 +15,10 @@ const fetchNewsList = async (): Promise<News[]> => {
 
   return data;
 };
+
+const fetchNewsList = unstable_cache(fetchNewsListUncached, ["news-list"], {
+  revalidate: 120,
+});
 
 export default async function NewsPage() {
   const newsList = await fetchNewsList();

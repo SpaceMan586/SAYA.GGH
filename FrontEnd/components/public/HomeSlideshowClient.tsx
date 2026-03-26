@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 
 export type HomeSlide = {
@@ -121,55 +120,28 @@ export default function HomeSlideshowClient({
     return null;
   }
 
-  const variants = {
-    enter: {
-      opacity: 0,
-      scale: 1.05,
-    },
-    center: {
-      zIndex: 1,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: {
-      zIndex: 0,
-      opacity: 0,
-      scale: 0.95,
-    },
-  };
-
   return (
     <>
       <main className="relative h-screen w-full overflow-hidden bg-black">
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={currentIndex}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              opacity: { duration: 0.5 },
-              scale: { duration: 0.5 },
+        <div
+          key={currentIndex}
+          className="absolute inset-0 h-full w-full home-slide-enter"
+        >
+          <div
+            className="absolute inset-0 z-0 h-full w-full bg-cover bg-center transition-transform duration-[6000ms] ease-linear md:hidden"
+            style={{
+              backgroundImage: `url(${currentSlide.image_url_mobile || currentSlide.image_url})`,
+              transform: "scale(1)",
             }}
-            className="absolute inset-0 h-full w-full"
-          >
-            <div
-              className="absolute inset-0 z-0 h-full w-full bg-cover bg-center transition-transform duration-[6000ms] ease-linear md:hidden"
-              style={{
-                backgroundImage: `url(${currentSlide.image_url_mobile || currentSlide.image_url})`,
-                transform: "scale(1)",
-              }}
-            />
-            <div
-              className="absolute inset-0 z-0 hidden h-full w-full bg-cover bg-center transition-transform duration-[6000ms] ease-linear md:block"
-              style={{
-                backgroundImage: `url(${currentSlide.image_url})`,
-                transform: "scale(1)",
-              }}
-            />
-          </motion.div>
-        </AnimatePresence>
+          />
+          <div
+            className="absolute inset-0 z-0 hidden h-full w-full bg-cover bg-center transition-transform duration-[6000ms] ease-linear md:block"
+            style={{
+              backgroundImage: `url(${currentSlide.image_url})`,
+              transform: "scale(1)",
+            }}
+          />
+        </div>
 
         <div className="absolute left-4 top-1/2 z-20 -translate-y-1/2">
           <button

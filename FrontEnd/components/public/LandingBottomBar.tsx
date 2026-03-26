@@ -8,9 +8,8 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import type { SocialLinks } from "@/lib/publicContent";
 
 const LiveChat = dynamic(
   () => import("@/components/shared/LiveChat").then((mod) => mod.LiveChat),
@@ -20,40 +19,16 @@ const LiveChat = dynamic(
   },
 );
 
-export default function LandingBottomBar() {
-  const pathname = usePathname();
-  const isHome = pathname === "/";
-  const isAdminPage = pathname?.startsWith("/admin");
+type LandingBottomBarProps = {
+  initialSocialLinks: SocialLinks;
+};
+
+export default function LandingBottomBar({
+  initialSocialLinks,
+}: LandingBottomBarProps) {
   const [isChatOpen, setIsChatOpen] = useState(false); // State for chat visibility
   const [shouldRenderChat, setShouldRenderChat] = useState(false);
-  const [socialLinks, setSocialLinks] = useState({
-    whatsapp: "",
-    instagram: "",
-    map: "",
-  });
-
-  useEffect(() => {
-    const fetchSocialLinks = async () => {
-      const { data } = await supabase
-        .from("page_content")
-        .select("body")
-        .eq("section", "social_links")
-        .maybeSingle();
-      if (data?.body) {
-        try {
-          const parsed = JSON.parse(data.body);
-          setSocialLinks({
-            whatsapp: parsed?.whatsapp || "",
-            instagram: parsed?.instagram || "",
-            map: parsed?.map || "",
-          });
-        } catch (e) {
-          console.error("Error parsing social links:", e);
-        }
-      }
-    };
-    fetchSocialLinks();
-  }, []);
+  const socialLinks = initialSocialLinks;
 
   const normalizeUrl = (value: string) => {
     const trimmed = value.trim();
@@ -65,8 +40,6 @@ export default function LandingBottomBar() {
   const whatsappHref = normalizeUrl(socialLinks.whatsapp);
   const instagramHref = normalizeUrl(socialLinks.instagram);
   const mapHref = normalizeUrl(socialLinks.map);
-
-  if (isAdminPage) return null;
 
   return (
     <div className="fixed bottom-0 left-0 z-[100] w-full flex items-center justify-between px-6 md:px-12 py-4 pb-4 md:pb-4 bg-white border-t border-gray-100 transition-all duration-300 supports-[padding:0_safe-area-inset-bottom]:pb-[calc(1rem+env(safe-area-inset-bottom))]">

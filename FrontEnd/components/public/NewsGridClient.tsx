@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import type { News } from "@/src/types/db";
 
@@ -23,11 +22,10 @@ export default function NewsGridClient({ newsList }: NewsGridClientProps) {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
       {newsList.map((item, idx) => (
-        <motion.div
+        <div
           key={item.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: idx * 0.05 }}
+          className="news-card-enter"
+          style={{ animationDelay: `${idx * 0.05}s` }}
         >
           <Link
             href={`/news/${item.id}`}
@@ -61,7 +59,7 @@ export default function NewsGridClient({ newsList }: NewsGridClientProps) {
               </p>
             </div>
           </Link>
-        </motion.div>
+        </div>
       ))}
     </div>
   );

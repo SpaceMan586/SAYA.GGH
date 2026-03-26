@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import ProjectClient from "./ProjectClient";
 
-export const dynamic = "force-dynamic";
-
 export default function ProjectPage() {
   return (
     <Suspense

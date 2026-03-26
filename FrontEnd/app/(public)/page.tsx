@@ -2,10 +2,9 @@ import HomeSlideshowClient, {
   type HomeSlide,
   type HomeSlideStatus,
 } from "@/components/public/HomeSlideshowClient";
+import { unstable_cache } from "next/cache";
 import { supabaseServer } from "@/lib/supabaseServer";
 import type { Project } from "@/src/types/db";
-
-export const dynamic = "force-dynamic";
 
 const parseUrlArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
@@ -66,7 +65,7 @@ const fetchLegacyProjectSlides = async (projectIds: number[]): Promise<HomeSlide
     .filter((slide): slide is HomeSlide => slide !== null);
 };
 
-const fetchHomeSlides = async (): Promise<{
+const fetchHomeSlidesUncached = async (): Promise<{
   status: HomeSlideStatus;
   slides: HomeSlide[];
 }> => {
@@ -110,6 +109,12 @@ const fetchHomeSlides = async (): Promise<{
     return { status: "error", slides: [] };
   }
 };
+
+const fetchHomeSlides = unstable_cache(
+  fetchHomeSlidesUncached,
+  ["home-slides"],
+  { revalidate: 120 },
+);
 
 export default async function Page() {
   const { status, slides } = await fetchHomeSlides();
