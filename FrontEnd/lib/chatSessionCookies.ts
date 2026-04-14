@@ -7,10 +7,15 @@ export const CHAT_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 const getChatSessionSecret = () => {
   const secret = process.env.CHAT_SESSION_SECRET;
-  if (!secret) {
-    throw new Error("Missing required environment variable: CHAT_SESSION_SECRET");
+  if (secret) {
+    return secret;
   }
-  return secret;
+
+  if (process.env.NODE_ENV !== "production") {
+    return "dev-only-chat-session-secret-change-me";
+  }
+
+  throw new Error("Missing required environment variable: CHAT_SESSION_SECRET");
 };
 
 export const signChatSessionId = (sessionId: string) => {

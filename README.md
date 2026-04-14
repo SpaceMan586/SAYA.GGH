@@ -43,7 +43,10 @@ Buat file `.env.local` di dalam direktori `FrontEnd`:
 NEXT_PUBLIC_SUPABASE_URL=url_supabase_anda
 NEXT_PUBLIC_SUPABASE_ANON_KEY=key_anon_supabase_anda
 NEXT_PUBLIC_GEMINI_API_KEY=api_key_gemini_anda
+CHAT_SESSION_SECRET=rahasia-acak-untuk-menandatangani-cookie-chat
 ```
+
+> Catatan: untuk mode development lokal, jika `CHAT_SESSION_SECRET` belum diisi maka sistem akan memakai secret default khusus development. Untuk production, variabel ini **wajib** diisi.
 
 ---
 
