@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   CHAT_SESSION_ID_COOKIE,
   CHAT_SESSION_SIG_COOKIE,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Invalid sessionId format" }, { status: 400 });
       }
 
-      const { data: existingSession, error } = await supabase
+      const { data: existingSession, error } = await supabaseAdmin
         .from("chat_sessions")
         .select("id")
         .eq("id", sessionId)
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ message: "Session not found" }, { status: 404 });
       }
     } else {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("chat_sessions")
         .insert([{ status: "ai" }])
         .select("id")

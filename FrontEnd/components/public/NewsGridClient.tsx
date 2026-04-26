@@ -3,15 +3,17 @@
 import Link from "next/link";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import type { News } from "@/src/types/db";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import { localizeContent } from "@/lib/i18n";
 
 interface NewsGridClientProps {
   newsList: News[];
 }
 
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return "Date not available";
+const formatDate = (dateString: string | null, language: "en" | "id") => {
+  if (!dateString) return null;
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(language === "id" ? "id-ID" : "en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -19,6 +21,8 @@ const formatDate = (dateString: string | null) => {
 };
 
 export default function NewsGridClient({ newsList }: NewsGridClientProps) {
+  const { language, t } = useLanguage();
+
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
       {newsList.map((item, idx) => (
@@ -36,26 +40,26 @@ export default function NewsGridClient({ newsList }: NewsGridClientProps) {
                 <ResponsiveImage
                   desktopSrc={item.image_url}
                   mobileSrc={item.image_url_mobile || item.image_url}
-                  alt={item.title || "News image"}
+                  alt={localizeContent(item.title, language) || t("news.imageAlt")}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xs font-bold uppercase tracking-widest text-gray-300">
-                  No Image
+                  {t("news.noImage")}
                 </div>
               )}
             </div>
             <div className="flex flex-col p-6">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {formatDate(item.date)}
+                {formatDate(item.date, language) || t("news.dateUnavailable")}
               </p>
               <h2 className="line-clamp-3 text-lg font-bold leading-snug tracking-tight text-gray-900">
-                {item.title}
+                {localizeContent(item.title, language)}
               </h2>
               <p className="mt-3 line-clamp-3 text-sm text-gray-600 font-serif">
-                {item.content}
+                {localizeContent(item.content, language)}
               </p>
             </div>
           </Link>

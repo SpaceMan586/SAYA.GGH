@@ -6,12 +6,15 @@ import Link from "next/link";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import { localizeContent } from "@/lib/i18n";
 
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function ProjectDetail() {
   const params = useParams();
   const id = params?.id;
+  const { language, t } = useLanguage();
 
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -79,13 +82,13 @@ export default function ProjectDetail() {
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center font-bold tracking-[0.3em] uppercase animate-pulse">
-        Loading project details...
+        {t("project.loadingDetail")}
       </div>
     );
   if (!project)
     return (
       <div className="flex h-screen items-center justify-center font-bold uppercase tracking-widest text-red-400">
-        Project not found.
+        {t("project.notFound")}
       </div>
     );
 
@@ -100,7 +103,9 @@ export default function ProjectDetail() {
               className="flex items-center gap-2 md:gap-4 hover:text-black transition-all group max-w-[120px] md:max-w-none"
             >
               <HiArrowLeft className="shrink-0 group-hover:-translate-x-1 transition-transform" />
-              <span className="truncate">{nav.prevTitle}</span>
+              <span className="truncate">
+                {localizeContent(nav.prevTitle, language)}
+              </span>
             </Link>
           ) : (
             <div></div>
@@ -110,7 +115,7 @@ export default function ProjectDetail() {
             href="/project"
             className="hover:text-black transition-colors shrink-0"
           >
-            GALLERY
+            {t("project.gallery")}
           </Link>
 
           {nav.next ? (
@@ -118,7 +123,9 @@ export default function ProjectDetail() {
               href={`/project/${nav.next}`}
               className="flex items-center gap-2 md:gap-4 hover:text-black transition-all group max-w-[120px] md:max-w-none"
             >
-              <span className="truncate">{nav.nextTitle}</span>
+              <span className="truncate">
+                {localizeContent(nav.nextTitle, language)}
+              </span>
               <HiArrowRight className="shrink-0 group-hover:translate-x-1 transition-transform" />
             </Link>
           ) : (
@@ -131,24 +138,38 @@ export default function ProjectDetail() {
           {/* Left Column (Mobile: Order 2) - Info (Sticky on Desktop) */}
           <div className="order-2 lg:order-1 lg:col-span-2 flex flex-col justify-start pt-0 lg:pt-8 lg:sticky lg:top-32">
             <h1 className="text-3xl md:text-6xl font-semibold mb-5 md:mb-10 uppercase tracking-tighter text-black leading-[0.95]">
-              {project.title}
+              {localizeContent(project.title, language)}
             </h1>
 
             <div className="grid grid-cols-2 gap-y-4 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 md:mb-12 border-y py-5 md:py-8 border-gray-100">
               <div>
-                <span className="block text-gray-300 mb-1">Status</span>
-                <span className="text-black">{project.status}</span>
+                <span className="block text-gray-300 mb-1">
+                  {t("project.status")}
+                </span>
+                <span className="text-black">
+                  {localizeContent(project.status, language)}
+                </span>
               </div>
               <div>
-                <span className="block text-gray-300 mb-1">Location</span>
-                <span className="text-black">{project.location}</span>
+                <span className="block text-gray-300 mb-1">
+                  {t("project.location")}
+                </span>
+                <span className="text-black">
+                  {localizeContent(project.location, language)}
+                </span>
               </div>
               <div>
-                <span className="block text-gray-300 mb-1">Year</span>
-                <span className="text-black">{project.year}</span>
+                <span className="block text-gray-300 mb-1">
+                  {t("project.year")}
+                </span>
+                <span className="text-black">
+                  {localizeContent(project.year, language)}
+                </span>
               </div>
               <div>
-                <span className="block text-gray-300 mb-1">Category</span>
+                <span className="block text-gray-300 mb-1">
+                  {t("project.category")}
+                </span>
                 <span className="text-black">
                   {(project.tags || []).join(", ") || "Uncategorized"}
                 </span>
@@ -156,8 +177,8 @@ export default function ProjectDetail() {
             </div>
 
             <div className="text-sm font-medium text-gray-600 leading-relaxed text-justify whitespace-pre-line">
-              {project.description ||
-                "No narrative available for this selected work."}
+              {localizeContent(project.description, language) ||
+                t("project.noNarrative")}
             </div>
           </div>
 
@@ -170,7 +191,9 @@ export default function ProjectDetail() {
                     <motion.img
                       key={currentSlide}
                       src={images[currentSlide]}
-                      alt={`${project.title} - Slide ${currentSlide + 1}`}
+                      alt={`${localizeContent(project.title, language)} - Slide ${
+                        currentSlide + 1
+                      }`}
                       initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 1.02 }}
@@ -243,7 +266,7 @@ export default function ProjectDetail() {
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                   <span className="text-gray-300 text-xs font-bold tracking-[0.5em] uppercase">
-                    NO IMAGES AVAILABLE
+                    {t("project.noImages")}
                   </span>
                 </div>
               )}

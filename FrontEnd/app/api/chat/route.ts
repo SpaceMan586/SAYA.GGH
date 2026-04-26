@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { encodeChatContent } from "@/lib/chatMessage";
+import {
+  getTranslation,
+  isLanguage,
+  localizeContent,
+  type Language,
+  type TranslationKey,
+} from "@/lib/i18n";
 import {
   CHAT_SESSION_ID_COOKIE,
   CHAT_SESSION_SIG_COOKIE,
@@ -28,7 +35,12 @@ const safeString = (value: unknown) => {
   return typeof value === "string" ? value.trim() : "";
 };
 
+const translate = (language: Language, key: TranslationKey) =>
+  getTranslation(language, key);
+
 export async function POST(req: NextRequest) {
+  let responseLanguage: Language = "id";
+
   try {
     const ip = getRequesterIp(req);
     const rateLimit = checkServerRateLimit({
@@ -41,7 +53,7 @@ export async function POST(req: NextRequest) {
     if (!rateLimit.allowed) {
       const response = NextResponse.json(
         {
-          reply: "Terlalu banyak permintaan. Coba lagi sebentar.",
+          reply: translate(responseLanguage, "chat.tooMany"),
         },
         { status: 429 },
       );
@@ -50,10 +62,11 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = (await req.json().catch(() => null)) as
-      | { message?: unknown; sessionId?: unknown }
+      | { message?: unknown; sessionId?: unknown; language?: unknown }
       | null;
     const message = safeString(payload?.message);
     const sessionId = safeString(payload?.sessionId);
+    responseLanguage = isLanguage(payload?.language) ? payload.language : "id";
 
     if (!message) {
       return NextResponse.json({ message: "Message is required" }, { status: 400 });
@@ -75,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     if (!isCookieMatch) {
       return NextResponse.json(
-        { reply: "Sesi chat tidak valid. Silakan mulai ulang chat." },
+        { reply: translate(responseLanguage, "chat.invalidSession") },
         { status: 403 },
       );
     }
@@ -83,7 +96,7 @@ export async function POST(req: NextRequest) {
     const userMessage = message.toLowerCase();
 
     // 1. Pastikan sesi ada lalu simpan pesan user
-    const { data: session, error: sessionError } = await supabase
+    const { data: session, error: sessionError } = await supabaseAdmin
       .from("chat_sessions")
       .select("status")
       .eq("id", sessionId)
@@ -91,12 +104,12 @@ export async function POST(req: NextRequest) {
 
     if (sessionError || !session) {
       return NextResponse.json(
-        { reply: "Sesi chat tidak ditemukan. Silakan mulai ulang chat." },
+        { reply: translate(responseLanguage, "chat.sessionNotFound") },
         { status: 404 },
       );
     }
 
-    const { error: userMessageError } = await supabase.from("chat_messages").insert([
+    const { error: userMessageError } = await supabaseAdmin.from("chat_messages").insert([
       {
         session_id: sessionId,
         content: encodeChatContent("user", message),
@@ -104,7 +117,7 @@ export async function POST(req: NextRequest) {
     ]);
     if (userMessageError) {
       return NextResponse.json(
-        { reply: "Gagal menyimpan pesan. Coba lagi." },
+        { reply: translate(responseLanguage, "chat.saveFailed") },
         { status: 500 },
       );
     }
@@ -115,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     // 3. LOGIKA "SMART KEYWORD MATCHING" (AI LOKAL SEDERHANA)
     // Ambil semua data pengetahuan dari database
-    const { data: knowledgeBase } = await supabase
+    const { data: knowledgeBase } = await supabaseAdmin
       .from("ai_knowledge")
       .select("topic, content");
 
@@ -127,15 +140,22 @@ export async function POST(req: NextRequest) {
       // Mapping kata user -> topik yang mungkin dimaksud
       const synonyms: Record<string, string[]> = {
         lokasi: ["alamat", "tempat", "dimana", "posisi", "kantor", "studio"],
+        location: ["address", "where", "place", "office", "studio"],
         harga: ["biaya", "fee", "tarif", "budget", "mahal", "murah", "rate"],
+        price: ["cost", "fee", "rate", "budget", "expensive", "cheap"],
         kontak: ["hubungi", "wa", "whatsapp", "telpon", "email", "nomor"],
+        contact: ["whatsapp", "phone", "email", "number", "reach"],
         layanan: ["jasa", "bikin", "buat", "desain", "bangun", "renovasi"],
+        service: ["design", "build", "renovation", "interior", "architecture"],
         portfolio: ["karya", "proyek", "hasil", "contoh", "gambar"],
+        project: ["portfolio", "work", "example", "image", "gallery"],
       };
 
       for (const item of knowledgeBase) {
-        const topic = safeString(item.topic);
-        const content = safeString(item.content);
+        const topic = safeString(localizeContent(item.topic, responseLanguage));
+        const content = safeString(
+          localizeContent(item.content, responseLanguage),
+        );
         if (!topic || !content) continue;
 
         const topicLower = topic.toLowerCase();
@@ -176,12 +196,11 @@ export async function POST(req: NextRequest) {
       botReply = bestMatchContent;
     } else {
       // Fallback Default jika tidak mengerti
-      botReply =
-        "Maaf, saya belum diajari tentang hal itu. Silakan tanya tentang Lokasi, Harga, atau Layanan kami, atau hubungi via WhatsApp untuk detailnya.";
+      botReply = translate(responseLanguage, "chat.defaultReply");
     }
 
     // 5. Simpan Jawaban Bot
-    await supabase.from("chat_messages").insert([
+    await supabaseAdmin.from("chat_messages").insert([
       {
         session_id: sessionId,
         content: encodeChatContent("bot", botReply),
@@ -192,7 +211,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Chat Error:", error);
     return NextResponse.json(
-      { reply: "Terjadi kesalahan sistem." },
+      { reply: translate(responseLanguage, "chat.systemError") },
       { status: 500 },
     );
   }

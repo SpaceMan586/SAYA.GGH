@@ -11,6 +11,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { HiMenuAlt2 } from "react-icons/hi";
 import { AppDrawer } from "../ui/AppDrawer";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import type { TranslationKey } from "@/lib/i18n";
 
 // New component for reusable sidebar content
 interface SidebarContentProps {
@@ -21,6 +23,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTag = searchParams.get("tag");
+  const { t } = useLanguage();
 
   const isActive = (tag: string | null) => {
     if (pathname !== "/project") return false;
@@ -28,11 +31,11 @@ function SidebarContent({ onClose }: SidebarContentProps) {
   };
 
   const navItems = [
-    { name: "All", tag: null },
-    { name: "Residential", tag: "residential" },
-    { name: "Public", tag: "public" },
-    { name: "Details", tag: "details" },
-  ];
+    { labelKey: "project.all", tag: null },
+    { labelKey: "project.residential", tag: "residential" },
+    { labelKey: "project.public", tag: "public" },
+    { labelKey: "project.details", tag: "details" },
+  ] satisfies { labelKey: TranslationKey; tag: string | null }[];
 
   return (
     <SidebarItems className="h-full p-0">
@@ -40,18 +43,18 @@ function SidebarContent({ onClose }: SidebarContentProps) {
         <div className="flex flex-col justify-end flex-1">
           <SidebarItemGroup className="p-0">
             <div className="mb-4 px-6 text-[10px] font-bold uppercase tracking-[0.3em] text-blue-600 italic">
-              Type
+              {t("project.type")}
             </div>
             {navItems.map((item) => (
               <Sidebar.Item
-                key={item.name}
+                key={item.labelKey}
                 as={Link}
                 href={item.tag ? `/project?tag=${item.tag}` : "/project"}
                 active={isActive(item.tag)}
                 className="rounded-none hover:bg-gray-50 px-6 py-3 text-[10px] font-bold tracking-widest uppercase"
                 onClick={onClose} // Close drawer on item click
               >
-                {item.name}
+                {t(item.labelKey)}
               </Sidebar.Item>
             ))}
           </SidebarItemGroup>

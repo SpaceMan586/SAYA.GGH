@@ -9,8 +9,11 @@ import {
   HiOutlineGlobeAlt,
 } from "react-icons/hi2";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import { localizeContent } from "@/lib/i18n";
 
 export default function AboutPage() {
+  const { language, t } = useLanguage();
   const [aboutData, setAboutData] = useState({
     title: "SAYA.GGH",
     body: "",
@@ -19,43 +22,37 @@ export default function AboutPage() {
   });
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [whatsappLink, setWhatsappLink] = useState("");
   const [aboutValues, setAboutValues] = useState<
     { title: string; body: string }[]
-  >([
-    {
-      title: "Context First",
-      body:
-        "We begin with place, climate, and culture to shape architecture that feels inevitable.",
-    },
-    {
-      title: "Quiet Precision",
-      body:
-        "Details are reduced to what matters most: light, proportion, and material honesty.",
-    },
-    {
-      title: "Inventive Craft",
-      body:
-        "We prototype ideas fast and refine them until the concept and construction align.",
-    },
-  ]);
+  >([]);
   const [aboutMilestones, setAboutMilestones] = useState<
     { year: string; label: string }[]
-  >([
-    { year: "2017", label: "Studio founded with a focus on residential design." },
-    { year: "2019", label: "First public project completed and featured locally." },
-    { year: "2022", label: "Expanded to cross-disciplinary interior collaborations." },
-    { year: "2025", label: "Launched design-build partnerships for faster delivery." },
-  ]);
-  const [aboutCta, setAboutCta] = useState({
-    eyebrow: "Start a Project",
-    title: "Tell us about your site, budget, and timeline.",
-    body: "We respond within 48 hours with a tailored discovery call.",
-    button_label: "Start a Project",
-    link: "",
-  });
+  >([]);
 
   const valueIcons = [HiOutlineGlobeAlt, HiOutlineSparkles, HiOutlineLightBulb];
+  const fallbackValues = [
+    {
+      title: t("about.valueContextTitle"),
+      body: t("about.valueContextBody"),
+    },
+    {
+      title: t("about.valuePrecisionTitle"),
+      body: t("about.valuePrecisionBody"),
+    },
+    {
+      title: t("about.valueCraftTitle"),
+      body: t("about.valueCraftBody"),
+    },
+  ];
+  const fallbackMilestones = [
+    { year: "2017", label: t("about.milestone2017") },
+    { year: "2019", label: t("about.milestone2019") },
+    { year: "2022", label: t("about.milestone2022") },
+    { year: "2025", label: t("about.milestone2025") },
+  ];
+  const displayValues = aboutValues.length > 0 ? aboutValues : fallbackValues;
+  const displayMilestones =
+    aboutMilestones.length > 0 ? aboutMilestones : fallbackMilestones;
 
   useEffect(() => {
     async function fetchData() {
@@ -68,7 +65,7 @@ export default function AboutPage() {
         .maybeSingle();
       if (about) {
         setAboutData({
-          title: about.title || "About Us",
+          title: about.title || "",
           body: about.body || "",
           image_url: about.image_url || "",
           image_url_mobile: about.image_url_mobile || "",
@@ -81,20 +78,6 @@ export default function AboutPage() {
         .select("*")
         .order("created_at", { ascending: true });
       if (teamData) setTeam(teamData);
-
-      const { data: socials } = await supabase
-        .from("page_content")
-        .select("body")
-        .eq("section", "social_links")
-        .maybeSingle();
-      if (socials?.body) {
-        try {
-          const parsed = JSON.parse(socials.body);
-          setWhatsappLink(parsed?.whatsapp || "");
-        } catch (e) {
-          console.error("Error parsing social links:", e);
-        }
-      }
 
       const { data: values } = await supabase
         .from("page_content")
@@ -138,40 +121,10 @@ export default function AboutPage() {
         }
       }
 
-      const { data: cta } = await supabase
-        .from("page_content")
-        .select("body")
-        .eq("section", "about_cta")
-        .maybeSingle();
-      if (cta?.body) {
-        try {
-          const parsed = JSON.parse(cta.body);
-          setAboutCta({
-            eyebrow: parsed?.eyebrow || "",
-            title: parsed?.title || "",
-            body: parsed?.body || "",
-            button_label: parsed?.button_label || "",
-            link: parsed?.link || "",
-          });
-        } catch (e) {
-          console.error("Error parsing about cta:", e);
-        }
-      }
-
       setLoading(false);
     }
     fetchData();
   }, []);
-
-  const normalizeUrl = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    return `https://${trimmed}`;
-  };
-
-  const whatsappHref = normalizeUrl(whatsappLink);
-  const ctaHref = normalizeUrl(aboutCta.link || whatsappLink);
 
   return (
     <>
@@ -179,7 +132,7 @@ export default function AboutPage() {
         <div className="max-w-5xl mx-auto px-6 md:px-10">
           {loading ? (
             <div className="text-center py-20 uppercase tracking-widest font-bold text-gray-400">
-              Loading Content...
+              {t("about.loading")}
             </div>
           ) : (
             <>
@@ -191,14 +144,14 @@ export default function AboutPage() {
                     <ResponsiveImage
                       desktopSrc={aboutData.image_url}
                       mobileSrc={aboutData.image_url_mobile || aboutData.image_url}
-                      alt="About Studio"
+                      alt={t("about.imageAlt")}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, 80vw"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-400 uppercase tracking-widest text-sm font-bold">
-                      Studio Image Placeholder
+                      {t("about.imagePlaceholder")}
                     </div>
                   )}
                 </div>
@@ -206,7 +159,8 @@ export default function AboutPage() {
                 {/* Description Text */}
                 <div className="max-w-4xl mx-auto text-center md:text-left">
                   <p className="text-gray-600 text-lg md:text-xl leading-relaxed font-light whitespace-pre-wrap text-justify">
-                    {aboutData.body || "No description provided yet."}
+                    {localizeContent(aboutData.body, language) ||
+                      t("about.noDescription")}
                   </p>
                 </div>
               </div>
@@ -215,10 +169,10 @@ export default function AboutPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-28">
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 md:p-10">
                   <h3 className="text-sm font-bold tracking-[0.35em] uppercase text-gray-500 mb-8">
-                    Studio Values
+                    {t("about.values")}
                   </h3>
                   <div className="space-y-6">
-                    {aboutValues.map((item, idx) => {
+                    {displayValues.map((item, idx) => {
                       const Icon = valueIcons[idx % valueIcons.length];
                       return (
                         <div
@@ -230,10 +184,10 @@ export default function AboutPage() {
                           </div>
                           <div>
                             <p className="text-lg font-semibold text-black">
-                              {item.title}
+                              {localizeContent(item.title, language)}
                             </p>
                             <p className="text-sm text-gray-600 leading-relaxed mt-1">
-                              {item.body}
+                              {localizeContent(item.body, language)}
                             </p>
                           </div>
                         </div>
@@ -244,10 +198,10 @@ export default function AboutPage() {
 
                 <div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-10">
                   <h3 className="text-sm font-bold tracking-[0.35em] uppercase text-gray-500 mb-8">
-                    Milestones
+                    {t("about.milestones")}
                   </h3>
                   <div className="space-y-6">
-                    {aboutMilestones.map((item, idx) => (
+                    {displayMilestones.map((item, idx) => (
                       <div
                         key={`${item.year}-${idx}`}
                         className="flex items-start gap-6"
@@ -257,7 +211,7 @@ export default function AboutPage() {
                         </div>
                         <div className="border-l-2 border-gray-200 pl-6">
                           <p className="text-gray-700 leading-relaxed">
-                            {item.label}
+                            {localizeContent(item.label, language)}
                           </p>
                         </div>
                       </div>
@@ -269,12 +223,12 @@ export default function AboutPage() {
               {/* OUR TEAM Section */}
               <div className="mt-32 text-center">
                 <h2 className="text-2xl md:text-3xl font-bold text-black uppercase tracking-tighter mb-16 italic decoration-gray-200 underline-offset-8 inline-block">
-                  OUR TEAM
+                  {t("about.team")}
                 </h2>
 
                 {team.length === 0 ? (
                   <p className="text-gray-400 uppercase text-xs font-bold tracking-widest">
-                    No team members added yet.
+                    {t("about.noTeam")}
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -307,52 +261,16 @@ export default function AboutPage() {
                         {/* Name & Role */}
                         <div className="border-l-2 border-gray-200 group-hover:border-black pl-6 transition-all duration-500">
                           <h3 className="text-xl font-bold text-black uppercase tracking-tighter leading-tight italic">
-                            {member.name}
+                            {localizeContent(member.name, language)}
                           </h3>
                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mt-2">
-                            {member.role}
+                            {localizeContent(member.role, language)}
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* CTA */}
-              <div className="mt-28 mb-10">
-                <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white px-8 md:px-12 py-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div>
-                    <p className="text-xs font-bold tracking-[0.35em] uppercase text-gray-500">
-                      {aboutCta.eyebrow || "Start a Project"}
-                    </p>
-                    <h3 className="text-2xl md:text-3xl font-bold text-black mt-3">
-                      {aboutCta.title ||
-                        "Tell us about your site, budget, and timeline."}
-                    </h3>
-                    <p className="text-gray-600 mt-2 max-w-2xl">
-                      {aboutCta.body ||
-                        "We respond within 48 hours with a tailored discovery call."}
-                    </p>
-                  </div>
-                  {ctaHref ? (
-                    <a
-                      href={ctaHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-black text-white px-8 py-3 text-xs font-bold tracking-[0.35em] uppercase rounded-sm hover:bg-gray-900 transition-colors"
-                    >
-                      {aboutCta.button_label || "Start a Project"}
-                    </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="bg-gray-300 text-white px-8 py-3 text-xs font-bold tracking-[0.35em] uppercase rounded-sm cursor-not-allowed"
-                    >
-                      {aboutCta.button_label || "Start a Project"}
-                    </button>
-                  )}
-                </div>
               </div>
             </>
           )}

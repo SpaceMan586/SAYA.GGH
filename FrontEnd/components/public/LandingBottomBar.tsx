@@ -10,6 +10,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import type { SocialLinks } from "@/lib/publicContent";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import LanguageToggle from "@/components/shared/LanguageToggle";
 
 const LiveChat = dynamic(
   () => import("@/components/shared/LiveChat").then((mod) => mod.LiveChat),
@@ -28,6 +30,7 @@ export default function LandingBottomBar({
 }: LandingBottomBarProps) {
   const [isChatOpen, setIsChatOpen] = useState(false); // State for chat visibility
   const [shouldRenderChat, setShouldRenderChat] = useState(false);
+  const { t } = useLanguage();
   const socialLinks = initialSocialLinks;
 
   const normalizeUrl = (value: string) => {
@@ -45,10 +48,8 @@ export default function LandingBottomBar({
     <div className="fixed bottom-0 left-0 z-[100] w-full flex items-center justify-between px-6 md:px-12 py-4 pb-4 md:pb-4 bg-white border-t border-gray-100 transition-all duration-300 supports-[padding:0_safe-area-inset-bottom]:pb-[calc(1rem+env(safe-area-inset-bottom))]">
       {/* LEFT SECTION (Visible on Mobile & Desktop) */}
       <div className="flex items-center gap-6 md:gap-8 text-[9px] md:text-[10px] font-semibold tracking-[0.3em] md:tracking-[0.4em] uppercase">
-        <span className="text-black/60 hover:text-black cursor-pointer transition-colors">
-          IND / ENG
-        </span>
-        <Link href="/admin/login" aria-label="Admin Login">
+        <LanguageToggle />
+        <Link href="/admin/login" aria-label={t("bottom.adminLogin")}>
           <FaUser className="text-black/40 text-sm md:text-base hover:text-black transition-all hover:scale-110 cursor-pointer" />
         </Link>
       </div>
@@ -105,7 +106,7 @@ export default function LandingBottomBar({
           }}
           className="bg-gray-900 hover:bg-black text-white text-[9px] md:text-[10px] font-semibold tracking-[0.3em] md:tracking-[0.4em] px-5 py-2.5 md:px-10 md:py-3 uppercase transition-all active:scale-95 rounded-sm flex items-center justify-center gap-2"
         >
-          CHAT US
+          {t("bottom.chatUs")}
         </button>
       </div>
       {/* Render LiveChat component */}

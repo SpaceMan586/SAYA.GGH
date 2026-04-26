@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { supabase } from "@/lib/supabase";
 import { decodeChatContent } from "@/lib/chatMessage";
+import { useLanguage } from "@/components/shared/LanguageProvider";
 
 type Message = {
   id: string;
@@ -23,11 +24,12 @@ interface LiveChatProps {
 }
 
 export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
+  const { language, t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "intro",
       role: "bot",
-      content: "Halo! Selamat datang di SAYA.GGH. Ada yang bisa saya bantu?",
+      content: t("chat.intro"),
     },
   ]);
   const [input, setInput] = useState("");
@@ -36,6 +38,14 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
   const [isHumanMode, setIsHumanMode] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.length === 1 && prev[0]?.id === "intro"
+        ? [{ ...prev[0], content: t("chat.intro") }]
+        : prev,
+    );
+  }, [t]);
 
   const upsertSessionCookie = async (existingSessionId?: string | null) => {
     const response = await fetch("/api/chat/session", {
@@ -125,8 +135,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
               {
                 id: "closed",
                 role: "bot",
-                content:
-                  "--- Sesi chat telah diakhiri oleh admin. Terima kasih telah menghubungi SAYA.GGH. ---",
+                content: t("chat.closed"),
               },
             ]);
           }
@@ -137,7 +146,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [sessionId]);
+  }, [sessionId, t]);
 
   const fetchHistory = async (id: string) => {
     const { data: session } = await supabase
@@ -206,6 +215,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
         body: JSON.stringify({
           message: userText,
           sessionId: currentSessionId,
+          language,
         }),
       });
 
@@ -231,8 +241,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
         {
           id: `${Date.now()}-error`,
           role: "bot",
-          content:
-            "Terjadi kendala saat memproses pesan. Coba lagi dalam beberapa saat.",
+          content: t("chat.error"),
         },
       ]);
     } finally {
@@ -274,10 +283,10 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
             </div>
             <div>
               <h3 className="font-bold text-sm">
-                {isHumanMode ? "Admin Support" : "AI Assistant"}
+                {isHumanMode ? t("chat.adminSupport") : t("chat.aiAssistant")}
               </h3>
               <p className="text-[10px] uppercase tracking-wider text-gray-300">
-                Online
+                {t("chat.online")}
               </p>
             </div>
           </div>
@@ -314,7 +323,7 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="flex-1 rounded-full px-4 py-2 bg-gray-50 text-sm"
-            placeholder="Tulis pesan..."
+            placeholder={t("chat.placeholder")}
           />
           <button
             type="submit"

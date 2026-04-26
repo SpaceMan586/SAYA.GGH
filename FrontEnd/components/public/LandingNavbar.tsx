@@ -3,16 +3,30 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import type { TranslationKey } from "@/lib/i18n";
 
 const navItems = [
-  { href: "/", label: "HOME" },
-  { href: "/about", label: "ABOUT" },
-  { href: "/project", label: "PROJECT" },
-  { href: "/news", label: "NEWS" },
-];
+  { href: "/", labelKey: "nav.home" },
+  { href: "/about", labelKey: "nav.about" },
+  { href: "/project", labelKey: "nav.project" },
+  { href: "/news", labelKey: "nav.news" },
+] satisfies { href: string; labelKey: TranslationKey }[];
+
+const navTextClass =
+  "text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black";
+
+const mobileNavTextClass = "text-lg tracking-[0.3em] uppercase text-black";
+
+const useNavItems = () => {
+  const { t } = useLanguage();
+  return navItems.map((item) => ({ ...item, label: t(item.labelKey) }));
+};
 
 export function LandingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
+  const localizedNavItems = useNavItems();
 
   return (
     <>
@@ -31,11 +45,11 @@ export function LandingNavbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center justify-end flex-1 gap-10">
-            {navItems.map((item) => (
+            {localizedNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-xs tracking-[0.3em] uppercase text-black/70 hover:text-black"
+                className={navTextClass}
               >
                 {item.label}
               </Link>
@@ -47,10 +61,10 @@ export function LandingNavbar() {
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-black"
-              aria-label="Toggle menu"
+              aria-label={t("nav.toggleMenu")}
             >
               <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
-                {isOpen ? "CLOSE" : "MENU"}
+                {isOpen ? t("nav.close") : t("nav.menu")}
               </span>
             </button>
           </div>
@@ -62,11 +76,11 @@ export function LandingNavbar() {
         <div className="fixed left-0 right-0 top-20 z-[60] px-6">
           <div className="mx-auto max-w-sm rounded-2xl border border-black/10 bg-white/95 shadow-xl backdrop-blur-sm">
             <div className="flex flex-col items-center gap-6 py-6">
-              {navItems.map((item) => (
+              {localizedNavItems.map((item) => (
                 <Link
                   key={`mobile-${item.href}`}
                   href={item.href}
-                  className="text-lg tracking-[0.3em] uppercase text-black"
+                  className={mobileNavTextClass}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}

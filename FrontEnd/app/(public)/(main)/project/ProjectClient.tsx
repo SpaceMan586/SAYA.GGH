@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { HiPhotograph } from "react-icons/hi";
 import Image from "next/image";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
+import { useLanguage } from "@/components/shared/LanguageProvider";
+import { localizeContent, type TranslationKey } from "@/lib/i18n";
 
 // Define the type for a single image in the details view
 interface ProjectImage {
@@ -19,6 +21,7 @@ interface ProjectImage {
 export default function ProjectClient() {
   const searchParams = useSearchParams();
   const tag = searchParams.get("tag");
+  const { language, t } = useLanguage();
 
   const [projects, setProjects] = useState<any[]>([]);
   const [allImages, setAllImages] = useState<ProjectImage[]>([]);
@@ -86,10 +89,10 @@ export default function ProjectClient() {
   }, [tag]);
 
   const getHeaderText = () => {
-    if (tag === "residential") return "Residential Works";
-    if (tag === "public") return "Public Works";
-    if (tag === "details") return "All Details";
-    return "Selected Works";
+    if (tag === "residential") return t("project.residentialWorks");
+    if (tag === "public") return t("project.publicWorks");
+    if (tag === "details") return t("project.allDetails");
+    return t("project.selectedWorks");
   };
 
   const countByTag = (key: string | null) => {
@@ -100,11 +103,11 @@ export default function ProjectClient() {
   };
 
   const filters = [
-    { key: null, label: "Selected" },
-    { key: "residential", label: "Residential" },
-    { key: "public", label: "Public" },
-    { key: "details", label: "Details" },
-  ];
+    { key: null, labelKey: "project.selected" },
+    { key: "residential", labelKey: "project.residential" },
+    { key: "public", labelKey: "project.public" },
+    { key: "details", labelKey: "project.details" },
+  ] satisfies { key: string | null; labelKey: TranslationKey }[];
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const activeFilter =
@@ -125,7 +128,7 @@ export default function ProjectClient() {
                 <ResponsiveImage
                   desktopSrc={project.image_url}
                   mobileSrc={project.image_url_mobile || project.image_url}
-                  alt={project.title || "Project image"}
+                  alt={localizeContent(project.title, language) || "Project image"}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
                   className="object-cover transition-transform duration-[1500ms] ease-out group-hover:scale-105"
@@ -139,24 +142,24 @@ export default function ProjectClient() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute bottom-0 left-0 p-6 w-full z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-500">
               <h3 className="text-xl font-semibold uppercase text-white leading-none">
-                {project.title}
+                {localizeContent(project.title, language)}
               </h3>
               <div className="flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-gray-300 mt-1">
-                <span>{project.location}</span>
+                <span>{localizeContent(project.location, language)}</span>
                 <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                <span>{project.year}</span>
+                <span>{localizeContent(project.year, language)}</span>
               </div>
             </div>
           </div>
           <div className="mt-3 md:mt-4 border-l-2 border-gray-200 pl-4">
             <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] md:tracking-[0.3em] text-gray-400">
-              {project.location || "Undisclosed"}
+              {localizeContent(project.location, language) || t("project.undisclosed")}
             </p>
             <h3 className="text-base md:text-lg font-semibold tracking-tight text-black mt-1">
-              {project.title}
+              {localizeContent(project.title, language)}
             </h3>
             <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest mt-1">
-              {project.year || "—"}
+              {localizeContent(project.year, language) || "—"}
             </p>
           </div>
         </Link>
@@ -177,7 +180,9 @@ export default function ProjectClient() {
             <div className="relative w-full">
               <Image
                 src={image.imageUrl}
-                alt={image.projectTitle || "Project image"}
+                alt={
+                  localizeContent(image.projectTitle, language) || "Project image"
+                }
                 width={1200}
                 height={900}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 20vw"
@@ -187,7 +192,7 @@ export default function ProjectClient() {
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-0 left-0 p-3 w-full z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
               <h3 className="text-xs font-bold uppercase text-white leading-none tracking-widest">
-                {image.projectTitle}
+                {localizeContent(image.projectTitle, language)}
               </h3>
             </div>
           </div>
@@ -204,14 +209,13 @@ export default function ProjectClient() {
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 md:gap-8">
             <div>
               <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] md:tracking-[0.45em] text-gray-400">
-                Architecture & Interior Design
+                {t("project.eyebrow")}
               </p>
               <h1 className="text-2xl md:text-5xl font-semibold tracking-tight uppercase text-black mt-2 md:mt-3">
                 {getHeaderText()}
               </h1>
               <p className="text-sm text-gray-600 mt-3 max-w-2xl">
-                Browse our studio work by category or dive into details for a
-                closer look at materials, light, and craft.
+                {t("project.intro")}
               </p>
             </div>
             <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
@@ -224,7 +228,7 @@ export default function ProjectClient() {
                 const count = countByTag(filter.key);
                 return (
                   <Link
-                    key={filter.label}
+                    key={filter.labelKey}
                     href={href}
                     className={`whitespace-nowrap px-4 py-2 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-[0.25em] md:tracking-[0.3em] transition-colors ${
                       active
@@ -232,7 +236,7 @@ export default function ProjectClient() {
                         : "bg-white border border-gray-200 text-gray-500 hover:text-black hover:border-gray-300"
                     }`}
                   >
-                    {filter.label}
+                    {t(filter.labelKey)}
                     <span className="ml-2 text-[9px] opacity-70">
                       {count}
                     </span>
@@ -247,7 +251,7 @@ export default function ProjectClient() {
                 aria-expanded={filtersOpen}
                 aria-label="Toggle filters"
               >
-                {activeFilter?.label || "Selected"}
+                {activeFilter ? t(activeFilter.labelKey) : t("project.selected")}
                 <span className="text-[9px] text-gray-400">
                   {countByTag(activeFilter?.key ?? null)}
                 </span>
@@ -263,14 +267,14 @@ export default function ProjectClient() {
                       (filter.key === null && !tag) || filter.key === tag;
                     return (
                       <Link
-                        key={filter.label}
+                        key={filter.labelKey}
                         href={href}
                         className={`flex items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-[0.25em] ${
                           active ? "bg-black text-white" : "text-gray-700"
                         }`}
                         onClick={() => setFiltersOpen(false)}
                       >
-                        <span>{filter.label}</span>
+                        <span>{t(filter.labelKey)}</span>
                         <span className="text-[9px] opacity-70">
                           {countByTag(filter.key)}
                         </span>
@@ -288,12 +292,12 @@ export default function ProjectClient() {
       <div className="px-5 md:px-16 max-w-full mx-auto pb-20 md:pb-24">
         {loading ? (
           <div className="flex h-64 items-center justify-center text-gray-400 font-semibold uppercase tracking-widest animate-pulse">
-            Loading projects...
+            {t("project.loading")}
           </div>
         ) : (projects.length === 0 && tag !== "details") ||
           (allImages.length === 0 && tag === "details") ? (
           <div className="flex h-64 items-center justify-center text-gray-400 font-semibold uppercase tracking-widest border-2 border-dashed rounded-3xl px-6 text-center">
-            No projects found for this category.
+            {t("project.notFoundCategory")}
           </div>
         ) : tag === "details" ? (
           renderDetailsGrid()

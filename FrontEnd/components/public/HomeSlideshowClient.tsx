@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
+import { useLanguage } from "@/components/shared/LanguageProvider";
 
 export type HomeSlide = {
   id: number;
@@ -22,6 +23,7 @@ export default function HomeSlideshowClient({
   initialStatus,
 }: HomeSlideshowClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -61,20 +63,19 @@ export default function HomeSlideshowClient({
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black/70" />
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white">
           <p className="mb-4 text-xs uppercase tracking-[0.35em] text-white/60">
-            Slideshow unavailable
+            {t("home.slideshowUnavailable")}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            Homepage slides are being prepared
+            {t("home.slidesPrepared")}
           </h1>
           <p className="mt-4 max-w-xl text-sm text-white/70">
-            The homepage slideshow isn&apos;t configured yet. Check back soon or
-            browse our projects directly.
+            {t("home.slidesPreparedBody")}
           </p>
           <Link
             href="/project"
             className="mt-8 inline-block rounded-sm border border-white/30 px-8 py-3 text-xs uppercase tracking-widest text-white transition-all duration-300 hover:bg-white hover:text-black"
           >
-            Browse Projects
+            {t("home.browseProjects")}
           </Link>
         </div>
       </main>
@@ -87,27 +88,26 @@ export default function HomeSlideshowClient({
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black/70" />
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white">
           <p className="mb-4 text-xs uppercase tracking-[0.35em] text-white/60">
-            Something went wrong
+            {t("home.somethingWrong")}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            We couldn&apos;t load the slideshow
+            {t("home.couldNotLoad")}
           </h1>
           <p className="mt-4 max-w-xl text-sm text-white/70">
-            Please refresh the page. If the issue persists, browse projects
-            directly.
+            {t("home.couldNotLoadBody")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
               onClick={() => window.location.reload()}
               className="inline-block rounded-sm border border-white/30 px-8 py-3 text-xs uppercase tracking-widest text-white transition-all duration-300 hover:bg-white hover:text-black"
             >
-              Retry
+              {t("home.retry")}
             </button>
             <Link
               href="/project"
               className="inline-block rounded-sm border border-white/30 px-8 py-3 text-xs uppercase tracking-widest text-white transition-all duration-300 hover:bg-white hover:text-black"
             >
-              Browse Projects
+              {t("home.browseProjects")}
             </Link>
           </div>
         </div>
