@@ -7,6 +7,7 @@ import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { localizeContent } from "@/lib/i18n";
 import type { News } from "@/src/types/db";
+import LocalizedText from "@/components/shared/LocalizedText";
 
 type NewsDetailClientProps = {
   news: News;
@@ -46,7 +47,7 @@ export default function NewsDetailClient({
             {formatDate(news.date, language) || t("news.dateUnavailable")}
           </p>
           <h1 className="text-4xl font-bold leading-tight tracking-tighter text-gray-900 md:text-5xl">
-            {title}
+            <LocalizedText value={news.title} language={language} />
           </h1>
         </header>
 
@@ -89,7 +90,7 @@ export default function NewsDetailClient({
         )}
 
         <article className="prose prose-lg lg:prose-xl max-w-none font-serif text-gray-800 prose-headings:font-sans prose-headings:font-bold prose-headings:tracking-tight">
-          {localizeContent(news.content, language)}
+          <LocalizedText value={news.content} language={language} />
         </article>
       </div>
     </main>

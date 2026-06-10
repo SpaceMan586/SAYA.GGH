@@ -59,7 +59,7 @@ export default function HomeSlideshowClient({
 
   if (initialStatus === "missing") {
     return (
-      <main className="relative h-screen w-full overflow-hidden bg-black">
+      <main className="relative h-[100svh] w-full overflow-hidden bg-black">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black/70" />
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white">
           <p className="mb-4 text-xs uppercase tracking-[0.35em] text-white/60">
@@ -84,7 +84,7 @@ export default function HomeSlideshowClient({
 
   if (initialStatus === "error") {
     return (
-      <main className="relative h-screen w-full overflow-hidden bg-black">
+      <main className="relative h-[100svh] w-full overflow-hidden bg-black">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-black/90 to-black/70" />
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white">
           <p className="mb-4 text-xs uppercase tracking-[0.35em] text-white/60">
@@ -98,6 +98,7 @@ export default function HomeSlideshowClient({
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
+              type="button"
               onClick={() => window.location.reload()}
               className="inline-block rounded-sm border border-white/30 px-8 py-3 text-xs uppercase tracking-widest text-white transition-all duration-300 hover:bg-white hover:text-black"
             >
@@ -122,7 +123,7 @@ export default function HomeSlideshowClient({
 
   return (
     <>
-      <main className="relative h-screen w-full overflow-hidden bg-black">
+      <main className="relative h-[100svh] w-full overflow-hidden bg-black">
         <div
           key={currentIndex}
           className="absolute inset-0 h-full w-full home-slide-enter"
@@ -145,35 +146,43 @@ export default function HomeSlideshowClient({
 
         <div className="absolute left-4 top-1/2 z-20 -translate-y-1/2">
           <button
+            type="button"
             onClick={prevSlide}
-            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            className="rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 active:scale-95"
+            aria-label="Previous slide"
           >
             <HiChevronLeft className="h-6 w-6" />
           </button>
         </div>
         <div className="absolute right-4 top-1/2 z-20 -translate-y-1/2">
           <button
+            type="button"
             onClick={nextSlide}
-            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            className="rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 active:scale-95"
+            aria-label="Next slide"
           >
             <HiChevronRight className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+        <div className="absolute bottom-24 left-1/2 z-30 flex -translate-x-1/2 gap-1 md:bottom-8 md:gap-2">
           {initialSlides.map((_, index) => (
             <button
+              type="button"
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-2 w-2 rounded-full transition-all ${
-                currentIndex === index ? "w-4 bg-white" : "bg-white/50"
-              }`}
-            />
+              className="flex h-8 w-8 items-center justify-center rounded-full active:scale-95"
+              aria-label={`Go to slide ${index + 1}`}
+            >
+              <span
+                className={`h-2 rounded-full transition-all ${
+                  currentIndex === index ? "w-4 bg-white" : "w-2 bg-white/50"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </main>
-
-      <div className="h-20 bg-white" />
     </>
   );
 }

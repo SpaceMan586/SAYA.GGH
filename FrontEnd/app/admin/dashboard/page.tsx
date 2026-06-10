@@ -10,6 +10,7 @@ import PagesTab from "@/components/admin/PagesTab";
 import OverviewTab from "@/components/admin/OverviewTab";
 import TrainingTab from "@/components/admin/TrainingTab";
 import ChatInbox from "@/components/admin/ChatInbox";
+import AccountSettingsTab from "@/components/admin/AccountSettingsTab";
 import ProjectModal from "@/components/admin/ProjectModal";
 import NewsModal from "@/components/admin/NewsModal";
 import TeamModal from "@/components/admin/TeamModal";
@@ -952,6 +953,7 @@ export default function DashboardPage() {
 
       {activeTab === "training" && <TrainingTab />}
       {activeTab === "inbox" && <ChatInbox />}
+      {activeTab === "settings" && <AccountSettingsTab />}
 
       <ProjectModal
         isOpen={isModalOpen}

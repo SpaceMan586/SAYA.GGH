@@ -5,6 +5,7 @@ import {
   CHAT_SESSION_SIG_COOKIE,
   getChatCookieOptions,
   signChatSessionId,
+  verifyChatSessionSignature,
 } from "@/lib/chatSessionCookies";
 import { checkServerRateLimit } from "@/lib/serverRateLimit";
 
@@ -31,6 +32,54 @@ const setSessionCookies = (response: NextResponse, sessionId: string) => {
   response.cookies.set(CHAT_SESSION_ID_COOKIE, sessionId, options);
   response.cookies.set(CHAT_SESSION_SIG_COOKIE, signChatSessionId(sessionId), options);
 };
+
+const isCookieBoundToSession = (req: NextRequest, sessionId: string) => {
+  const cookieSessionId = req.cookies.get(CHAT_SESSION_ID_COOKIE)?.value || "";
+  const cookieSessionSig = req.cookies.get(CHAT_SESSION_SIG_COOKIE)?.value || "";
+
+  return (
+    cookieSessionId === sessionId &&
+    verifyChatSessionSignature(sessionId, cookieSessionSig)
+  );
+};
+
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get("sessionId")?.trim() || "";
+  if (!SESSION_ID_REGEX.test(sessionId)) {
+    return NextResponse.json({ message: "Invalid sessionId format" }, { status: 400 });
+  }
+
+  if (!isCookieBoundToSession(req, sessionId)) {
+    return NextResponse.json({ message: "Invalid chat session" }, { status: 403 });
+  }
+
+  const [{ data: session, error: sessionError }, { data: messages, error: messagesError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("chat_sessions")
+        .select("id, status, created_at")
+        .eq("id", sessionId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("chat_messages")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true }),
+    ]);
+
+  if (sessionError || messagesError) {
+    return NextResponse.json(
+      { message: "Failed to fetch chat session" },
+      { status: 500 },
+    );
+  }
+
+  if (!session) {
+    return NextResponse.json({ message: "Session not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ session, messages: messages || [] });
+}
 
 export async function POST(req: NextRequest) {
   try {

@@ -14,17 +14,24 @@ const requireEnv = (name: string) => {
   return value;
 };
 
-const createServerSupabaseClient = () => {
-  const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const supabaseAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+let authClient: ReturnType<typeof createClient> | null = null;
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
+const getAuthClient = () => {
+  if (authClient) return authClient;
+
+  authClient = createClient(
+    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
     },
-  });
+  );
+
+  return authClient;
 };
 
 export async function POST(req: NextRequest) {
@@ -44,11 +51,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createServerSupabaseClient();
-    const { data, error } = await supabase.auth.getUser(accessToken);
+    const { data, error } = await getAuthClient().auth.getUser(accessToken);
 
     if (error || !data.user) {
-      return NextResponse.json({ message: "Invalid auth session" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Invalid auth session" },
+        { status: 401 },
+      );
     }
 
     const response = NextResponse.json({ ok: true });

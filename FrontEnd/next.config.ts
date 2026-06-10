@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   experimental: {
     devtoolSegmentExplorer: false,
     optimizePackageImports: ["flowbite-react", "react-icons", "framer-motion"],

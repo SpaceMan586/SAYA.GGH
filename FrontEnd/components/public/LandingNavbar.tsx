@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
+import { HiMenuAlt3, HiX } from "react-icons/hi";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -59,13 +60,17 @@ export function LandingNavbar() {
           {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
-              className="text-black"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-black shadow-sm active:scale-95"
               aria-label={t("nav.toggleMenu")}
+              aria-expanded={isOpen}
             >
-              <span className="text-[10px] font-bold tracking-[0.35em] uppercase">
-                {isOpen ? t("nav.close") : t("nav.menu")}
-              </span>
+              {isOpen ? (
+                <HiX className="h-6 w-6" />
+              ) : (
+                <HiMenuAlt3 className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>

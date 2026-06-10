@@ -4,9 +4,10 @@ import { useParams } from "next/navigation";
 
 import Link from "next/link";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/components/shared/LanguageProvider";
+import LocalizedText from "@/components/shared/LocalizedText";
 import { localizeContent } from "@/lib/i18n";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -78,6 +79,10 @@ export default function ProjectDetail() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % images.length);
   const prevSlide = () =>
     setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
+  const categoryTags =
+    project && Array.isArray(project.tags) && project.tags.length > 0
+      ? project.tags
+      : ["uncategorized"];
 
   if (loading)
     return (
@@ -138,7 +143,7 @@ export default function ProjectDetail() {
           {/* Left Column (Mobile: Order 2) - Info (Sticky on Desktop) */}
           <div className="order-2 lg:order-1 lg:col-span-2 flex flex-col justify-start pt-0 lg:pt-8 lg:sticky lg:top-32">
             <h1 className="text-3xl md:text-6xl font-semibold mb-5 md:mb-10 uppercase tracking-tighter text-black leading-[0.95]">
-              {localizeContent(project.title, language)}
+              <LocalizedText value={project.title} language={language} />
             </h1>
 
             <div className="grid grid-cols-2 gap-y-4 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 md:mb-12 border-y py-5 md:py-8 border-gray-100">
@@ -147,7 +152,7 @@ export default function ProjectDetail() {
                   {t("project.status")}
                 </span>
                 <span className="text-black">
-                  {localizeContent(project.status, language)}
+                  <LocalizedText value={project.status} language={language} />
                 </span>
               </div>
               <div>
@@ -155,7 +160,7 @@ export default function ProjectDetail() {
                   {t("project.location")}
                 </span>
                 <span className="text-black">
-                  {localizeContent(project.location, language)}
+                  <LocalizedText value={project.location} language={language} />
                 </span>
               </div>
               <div>
@@ -163,7 +168,7 @@ export default function ProjectDetail() {
                   {t("project.year")}
                 </span>
                 <span className="text-black">
-                  {localizeContent(project.year, language)}
+                  <LocalizedText value={project.year} language={language} />
                 </span>
               </div>
               <div>
@@ -171,14 +176,22 @@ export default function ProjectDetail() {
                   {t("project.category")}
                 </span>
                 <span className="text-black">
-                  {(project.tags || []).join(", ") || "Uncategorized"}
+                  {categoryTags.map((tag: string, index: number) => (
+                    <Fragment key={`${tag}-${index}`}>
+                      <LocalizedText value={tag} language={language} />
+                      {index < categoryTags.length - 1 ? ", " : ""}
+                    </Fragment>
+                  ))}
                 </span>
               </div>
             </div>
 
             <div className="text-sm font-medium text-gray-600 leading-relaxed text-justify whitespace-pre-line">
-              {localizeContent(project.description, language) ||
-                t("project.noNarrative")}
+              <LocalizedText
+                value={project.description}
+                language={language}
+                fallback={t("project.noNarrative")}
+              />
             </div>
           </div>
 
@@ -220,6 +233,7 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-5 px-4 md:px-5 py-2.5 md:py-3 rounded-full bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl pointer-events-auto">
                         {/* Prev Button - Larger Touch Target */}
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -235,6 +249,7 @@ export default function ProjectDetail() {
                         <div className="flex gap-1.5 px-2">
                           {images.map((_: any, idx: number) => (
                             <button
+                              type="button"
                               key={idx}
                               onClick={(e) => {
                                 e.preventDefault();
@@ -249,6 +264,7 @@ export default function ProjectDetail() {
 
                         {/* Next Button - Larger Touch Target */}
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();

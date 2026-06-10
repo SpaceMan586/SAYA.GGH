@@ -5,6 +5,7 @@ import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import type { News } from "@/src/types/db";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { localizeContent } from "@/lib/i18n";
+import LocalizedText from "@/components/shared/LocalizedText";
 
 interface NewsGridClientProps {
   newsList: News[];
@@ -56,10 +57,10 @@ export default function NewsGridClient({ newsList }: NewsGridClientProps) {
                 {formatDate(item.date, language) || t("news.dateUnavailable")}
               </p>
               <h2 className="line-clamp-3 text-lg font-bold leading-snug tracking-tight text-gray-900">
-                {localizeContent(item.title, language)}
+                <LocalizedText value={item.title} language={language} />
               </h2>
               <p className="mt-3 line-clamp-3 text-sm text-gray-600 font-serif">
-                {localizeContent(item.content, language)}
+                <LocalizedText value={item.content} language={language} />
               </p>
             </div>
           </Link>

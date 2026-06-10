@@ -10,7 +10,7 @@ interface AppDrawerProps {
 
 export function AppDrawer({ isOpen, onClose, children }: AppDrawerProps) {
   return (
-    <Drawer open={isOpen} onClose={onClose} className="w-64">
+    <Drawer open={isOpen} onClose={onClose} className="z-[120] w-64">
       <Drawer.Header title="Navigation" /> {/* Optional: Add a drawer header */}
       <div className="h-full flex flex-col bg-white">
         {children} {/* Render children here */}

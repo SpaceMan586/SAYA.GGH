@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FaRobot,
   FaTimes,
   FaPaperPlane,
-  FaCommentDots,
   FaUserTie,
 } from "react-icons/fa";
-import { supabase } from "@/lib/supabase";
 import { decodeChatContent } from "@/lib/chatMessage";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 
 type Message = {
   id: string;
   role: "user" | "bot" | "admin";
+  content: string;
+};
+
+type ChatHistoryMessage = {
+  id: number;
   content: string;
 };
 
@@ -47,7 +50,16 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
     );
   }, [t]);
 
-  const upsertSessionCookie = async (existingSessionId?: string | null) => {
+  const createIntroMessage = useCallback(
+    (): Message => ({
+      id: "intro",
+      role: "bot",
+      content: t("chat.intro"),
+    }),
+    [t],
+  );
+
+  const upsertSessionCookie = useCallback(async (existingSessionId?: string | null) => {
     const response = await fetch("/api/chat/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -65,7 +77,55 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
       throw new Error("Missing chat session id");
     }
     return data.sessionId;
-  };
+  }, []);
+
+  const fetchHistory = useCallback(
+    async (id: string) => {
+      const response = await fetch(
+        `/api/chat/session?sessionId=${encodeURIComponent(id)}`,
+        { cache: "no-store" },
+      );
+
+      if (!response.ok) {
+        localStorage.removeItem("chat_session_id");
+        setSessionId(null);
+        return;
+      }
+
+      const data = (await response.json()) as {
+        session: { status: "ai" | "human" | "closed" };
+        messages: ChatHistoryMessage[];
+      };
+
+      if (data.session.status === "closed") {
+        localStorage.removeItem("chat_session_id");
+        setSessionId(null);
+        await fetch("/api/chat/session", { method: "DELETE" }).catch(() => {});
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: "closed",
+            role: "bot",
+            content: t("chat.closed"),
+          },
+        ]);
+        return;
+      }
+
+      setIsHumanMode(data.session.status === "human");
+      const decodedMessages = data.messages.map((message) => {
+        const decoded = decodeChatContent(message.content || "");
+        return {
+          id: message.id.toString(),
+          role: decoded.role,
+          content: decoded.content,
+        };
+      });
+
+      setMessages(decodedMessages.length > 0 ? decodedMessages : [createIntroMessage()]);
+    },
+    [createIntroMessage, t],
+  );
 
   /* ===================== INIT SESSION ===================== */
   useEffect(() => {
@@ -84,104 +144,17 @@ export const LiveChat = ({ isOpen, onClose }: LiveChatProps) => {
         localStorage.removeItem("chat_session_id");
         setSessionId(null);
       });
-  }, [isOpen]); // Depend on isOpen
+  }, [fetchHistory, isOpen, upsertSessionCookie]);
 
-  /* ===================== REALTIME LISTENER ===================== */
   useEffect(() => {
-    if (!sessionId) return;
+    if (!isOpen || !sessionId) return;
 
-    const channel = supabase
-      .channel(`session:${sessionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        (payload) => {
-          const decoded = decodeChatContent(payload.new.content || "");
-          if (decoded.role === "admin") {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: payload.new.id.toString(),
-                role: "admin",
-                content: decoded.content,
-              },
-            ]);
-          }
-        },
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "chat_sessions",
-          filter: `id=eq.${sessionId}`,
-        },
-        (payload) => {
-          if (payload.new.status === "human") setIsHumanMode(true);
-          if (payload.new.status === "ai") setIsHumanMode(false);
+    const intervalId = window.setInterval(() => {
+      fetchHistory(sessionId);
+    }, 3500);
 
-          if (payload.new.status === "closed") {
-            localStorage.removeItem("chat_session_id");
-            setSessionId(null);
-            fetch("/api/chat/session", { method: "DELETE" }).catch(() => {});
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: "closed",
-                role: "bot",
-                content: t("chat.closed"),
-              },
-            ]);
-          }
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sessionId, t]);
-
-  const fetchHistory = async (id: string) => {
-    const { data: session } = await supabase
-      .from("chat_sessions")
-      .select("status")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (!session) {
-      localStorage.removeItem("chat_session_id");
-      setSessionId(null);
-      return;
-    }
-
-    if (session.status === "human") setIsHumanMode(true);
-
-    const { data: msgs } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .eq("session_id", id)
-      .order("created_at", { ascending: true });
-
-    if (msgs) {
-      setMessages(
-        msgs.map((m) => {
-          const decoded = decodeChatContent(m.content || "");
-          return {
-            id: m.id.toString(),
-            role: decoded.role,
-            content: decoded.content,
-          };
-        }),
-      );
-    }
-  };
+    return () => window.clearInterval(intervalId);
+  }, [fetchHistory, isOpen, sessionId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

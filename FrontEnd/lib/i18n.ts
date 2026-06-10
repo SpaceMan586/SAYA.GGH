@@ -179,7 +179,8 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     "news.backToNews": "Back to News",
     "news.backToJournal": "Back to Journal",
     "news.gallery": "Gallery",
-    "chat.intro": "Hello! Welcome to SAYA.GGH. How can I help you?",
+    "chat.intro":
+      "Hi, welcome to SAYA.GGH. Ask me about projects, services, budget, location, or consultation.",
     "chat.closed":
       "--- This chat session has been ended by admin. Thank you for contacting SAYA.GGH. ---",
     "chat.error":
@@ -193,7 +194,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     "chat.sessionNotFound": "Chat session not found. Please restart the chat.",
     "chat.saveFailed": "Failed to save your message. Please try again.",
     "chat.defaultReply":
-      "Sorry, I haven't been trained on that yet. Please ask about our location, pricing, or services, or contact us via WhatsApp for details.",
+      "I can help, but I need a little more context. Are you asking about location, design services, budget, portfolio, or consultation schedule?",
     "chat.systemError": "A system error occurred.",
   },
   id: {
@@ -282,7 +283,8 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     "news.backToNews": "Kembali ke Berita",
     "news.backToJournal": "Kembali ke Jurnal",
     "news.gallery": "Galeri",
-    "chat.intro": "Halo! Selamat datang di SAYA.GGH. Ada yang bisa saya bantu?",
+    "chat.intro":
+      "Halo, selamat datang di SAYA.GGH. Kamu bisa tanya soal proyek, layanan, budget, lokasi, atau konsultasi.",
     "chat.closed":
       "--- Sesi chat telah diakhiri oleh admin. Terima kasih telah menghubungi SAYA.GGH. ---",
     "chat.error":
@@ -297,13 +299,126 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
       "Sesi chat tidak ditemukan. Silakan mulai ulang chat.",
     "chat.saveFailed": "Gagal menyimpan pesan. Coba lagi.",
     "chat.defaultReply":
-      "Maaf, saya belum diajari tentang hal itu. Silakan tanya tentang Lokasi, Harga, atau Layanan kami, atau hubungi via WhatsApp untuk detailnya.",
+      "Bisa saya bantu, tapi saya perlu sedikit konteks lagi. Kamu ingin tanya soal lokasi, layanan desain, budget, portfolio, atau jadwal konsultasi?",
     "chat.systemError": "Terjadi kesalahan sistem.",
   },
 };
 
 export const getTranslation = (language: Language, key: TranslationKey) =>
   translations[language][key];
+
+const normalizeLookupKey = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+
+const knownContentTranslations: Record<string, Record<Language, string>> = {
+  "on going": { en: "On Going", id: "Sedang Berjalan" },
+  ongoing: { en: "On Going", id: "Sedang Berjalan" },
+  "sedang berjalan": { en: "On Going", id: "Sedang Berjalan" },
+  berjalan: { en: "On Going", id: "Sedang Berjalan" },
+  finished: { en: "Finished", id: "Selesai" },
+  finish: { en: "Finished", id: "Selesai" },
+  complete: { en: "Complete", id: "Selesai" },
+  completed: { en: "Completed", id: "Selesai" },
+  selesai: { en: "Finished", id: "Selesai" },
+  residential: { en: "Residential", id: "Residensial" },
+  residence: { en: "Residential", id: "Residensial" },
+  residensial: { en: "Residential", id: "Residensial" },
+  public: { en: "Public", id: "Publik" },
+  publik: { en: "Public", id: "Publik" },
+  commercial: { en: "Commercial", id: "Komersial" },
+  komersial: { en: "Commercial", id: "Komersial" },
+  interior: { en: "Interior", id: "Interior" },
+  architecture: { en: "Architecture", id: "Arsitektur" },
+  arsitektur: { en: "Architecture", id: "Arsitektur" },
+  landscape: { en: "Landscape", id: "Lanskap" },
+  lanskap: { en: "Landscape", id: "Lanskap" },
+  uncategorized: { en: "Uncategorized", id: "Tanpa Kategori" },
+  "tanpa kategori": { en: "Uncategorized", id: "Tanpa Kategori" },
+};
+
+export const getKnownLocalizedContent = (
+  value: unknown,
+  language: Language,
+): string | null => {
+  if (typeof value !== "string") return null;
+
+  const known = knownContentTranslations[normalizeLookupKey(value)];
+  return known?.[language] ?? null;
+};
+
+export const hasLocalizedContent = (value: unknown): boolean => {
+  if (value == null) return false;
+
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Partial<Record<Language, unknown>>;
+    return typeof record.en === "string" || typeof record.id === "string";
+  }
+
+  if (typeof value !== "string") return false;
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{")) return false;
+
+  try {
+    const parsed = JSON.parse(trimmed) as Partial<Record<Language, unknown>>;
+    return typeof parsed.en === "string" || typeof parsed.id === "string";
+  } catch {
+    return false;
+  }
+};
+
+export const getLocalizedContentForLanguage = (
+  value: unknown,
+  language: Language,
+): string | null => {
+  if (value == null) return null;
+
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Partial<Record<Language, unknown>>;
+    const localized = record[language];
+    return typeof localized === "string" && localized.trim()
+      ? localized
+      : null;
+  }
+
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{")) return null;
+
+  try {
+    const parsed = JSON.parse(trimmed) as Partial<Record<Language, unknown>>;
+    const localized = parsed[language];
+    return typeof localized === "string" && localized.trim()
+      ? localized
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const pickLocalizedContent = (
+  record: Partial<Record<Language, unknown>>,
+  language: Language,
+  fallbackLanguage: Language,
+) => {
+  const alternateLanguage: Language = language === "en" ? "id" : "en";
+  const candidates = [
+    record[language],
+    record[fallbackLanguage],
+    record[alternateLanguage],
+  ];
+
+  const localized = candidates.find(
+    (candidate) => typeof candidate === "string" && candidate.trim(),
+  );
+
+  return typeof localized === "string" ? localized : "";
+};
 
 export const localizeContent = (
   value: unknown,
@@ -314,8 +429,7 @@ export const localizeContent = (
 
   if (typeof value === "object" && !Array.isArray(value)) {
     const record = value as Partial<Record<Language, unknown>>;
-    const localized = record[language] ?? record[fallbackLanguage];
-    return typeof localized === "string" ? localized : "";
+    return pickLocalizedContent(record, language, fallbackLanguage);
   }
 
   if (typeof value !== "string") return String(value);
@@ -325,9 +439,17 @@ export const localizeContent = (
 
   try {
     const parsed = JSON.parse(trimmed) as Partial<Record<Language, unknown>>;
-    const localized = parsed[language] ?? parsed[fallbackLanguage];
-    return typeof localized === "string" ? localized : value;
+    return pickLocalizedContent(parsed, language, fallbackLanguage) || value;
   } catch {
     return value;
   }
+};
+
+export const localizeDataContent = (
+  value: unknown,
+  language: Language,
+  fallbackLanguage: Language = DEFAULT_LANGUAGE,
+): string => {
+  const localized = localizeContent(value, language, fallbackLanguage);
+  return getKnownLocalizedContent(localized, language) ?? localized;
 };

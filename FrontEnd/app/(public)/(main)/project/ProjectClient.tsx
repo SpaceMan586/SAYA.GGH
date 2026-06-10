@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { HiPhotograph } from "react-icons/hi";
+import { HiChevronDown, HiPhotograph } from "react-icons/hi";
 import Image from "next/image";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import { useLanguage } from "@/components/shared/LanguageProvider";
 import { localizeContent, type TranslationKey } from "@/lib/i18n";
+import LocalizedText from "@/components/shared/LocalizedText";
 
 // Define the type for a single image in the details view
 interface ProjectImage {
@@ -142,24 +143,32 @@ export default function ProjectClient() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent opacity-90 md:opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute bottom-0 left-0 p-6 w-full z-10 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-500">
               <h3 className="text-xl font-semibold uppercase text-white leading-none">
-                {localizeContent(project.title, language)}
+                <LocalizedText value={project.title} language={language} />
               </h3>
               <div className="flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-gray-300 mt-1">
-                <span>{localizeContent(project.location, language)}</span>
+                <span>
+                  <LocalizedText value={project.location} language={language} />
+                </span>
                 <span className="w-1 h-1 bg-gray-400 rounded-full" />
-                <span>{localizeContent(project.year, language)}</span>
+                <span>
+                  <LocalizedText value={project.year} language={language} />
+                </span>
               </div>
             </div>
           </div>
           <div className="mt-3 md:mt-4 border-l-2 border-gray-200 pl-4">
             <p className="text-[10px] md:text-xs font-bold uppercase tracking-[0.25em] md:tracking-[0.3em] text-gray-400">
-              {localizeContent(project.location, language) || t("project.undisclosed")}
+              <LocalizedText
+                value={project.location}
+                language={language}
+                fallback={t("project.undisclosed")}
+              />
             </p>
             <h3 className="text-base md:text-lg font-semibold tracking-tight text-black mt-1">
-              {localizeContent(project.title, language)}
+              <LocalizedText value={project.title} language={language} />
             </h3>
             <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest mt-1">
-              {localizeContent(project.year, language) || "—"}
+              <LocalizedText value={project.year} language={language} fallback="-" />
             </p>
           </div>
         </Link>
@@ -192,7 +201,7 @@ export default function ProjectClient() {
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-0 left-0 p-3 w-full z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
               <h3 className="text-xs font-bold uppercase text-white leading-none tracking-widest">
-                {localizeContent(image.projectTitle, language)}
+                <LocalizedText value={image.projectTitle} language={language} />
               </h3>
             </div>
           </div>
@@ -246,6 +255,7 @@ export default function ProjectClient() {
             </div>
             <div className="md:hidden relative">
               <button
+                type="button"
                 onClick={() => setFiltersOpen((v) => !v)}
                 className="flex items-center gap-3 px-4 py-2 rounded-full border border-gray-200 bg-white text-xs font-bold uppercase tracking-[0.25em] text-gray-700"
                 aria-expanded={filtersOpen}
@@ -255,7 +265,11 @@ export default function ProjectClient() {
                 <span className="text-[9px] text-gray-400">
                   {countByTag(activeFilter?.key ?? null)}
                 </span>
-                <span className="text-gray-400">☰</span>
+                <HiChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform ${
+                    filtersOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
               {filtersOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden z-10">

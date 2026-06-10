@@ -10,7 +10,7 @@ import {
 } from "react-icons/hi2";
 import ResponsiveImage from "@/components/shared/ResponsiveImage";
 import { useLanguage } from "@/components/shared/LanguageProvider";
-import { localizeContent } from "@/lib/i18n";
+import LocalizedText from "@/components/shared/LocalizedText";
 
 export default function AboutPage() {
   const { language, t } = useLanguage();
@@ -159,8 +159,11 @@ export default function AboutPage() {
                 {/* Description Text */}
                 <div className="max-w-4xl mx-auto text-center md:text-left">
                   <p className="text-gray-600 text-lg md:text-xl leading-relaxed font-light whitespace-pre-wrap text-justify">
-                    {localizeContent(aboutData.body, language) ||
-                      t("about.noDescription")}
+                    <LocalizedText
+                      value={aboutData.body}
+                      language={language}
+                      fallback={t("about.noDescription")}
+                    />
                   </p>
                 </div>
               </div>
@@ -184,10 +187,16 @@ export default function AboutPage() {
                           </div>
                           <div>
                             <p className="text-lg font-semibold text-black">
-                              {localizeContent(item.title, language)}
+                              <LocalizedText
+                                value={item.title}
+                                language={language}
+                              />
                             </p>
                             <p className="text-sm text-gray-600 leading-relaxed mt-1">
-                              {localizeContent(item.body, language)}
+                              <LocalizedText
+                                value={item.body}
+                                language={language}
+                              />
                             </p>
                           </div>
                         </div>
@@ -211,7 +220,10 @@ export default function AboutPage() {
                         </div>
                         <div className="border-l-2 border-gray-200 pl-6">
                           <p className="text-gray-700 leading-relaxed">
-                            {localizeContent(item.label, language)}
+                            <LocalizedText
+                              value={item.label}
+                              language={language}
+                            />
                           </p>
                         </div>
                       </div>
@@ -260,11 +272,17 @@ export default function AboutPage() {
                         </div>
                         {/* Name & Role */}
                         <div className="border-l-2 border-gray-200 group-hover:border-black pl-6 transition-all duration-500">
-                          <h3 className="text-xl font-bold text-black uppercase tracking-tighter leading-tight italic">
-                            {localizeContent(member.name, language)}
+                          <h3
+                            className="notranslate text-xl font-bold text-black uppercase tracking-tighter leading-tight italic"
+                            translate="no"
+                          >
+                            {member.name || ""}
                           </h3>
                           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mt-2">
-                            {localizeContent(member.role, language)}
+                            <LocalizedText
+                              value={member.role}
+                              language={language}
+                            />
                           </p>
                         </div>
                       </div>

@@ -1,0 +1,4 @@
+*.log
+dev.*.log
+.next
+node_modules

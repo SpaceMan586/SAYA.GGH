@@ -73,10 +73,11 @@ export function AppSidebar() {
   return (
     <>
       {/* Hamburger icon for mobile */}
-      <div className="fixed top-4 left-4 z-50 md:hidden">
+      <div className="fixed left-4 top-24 z-[70] md:hidden">
         <button
+          type="button"
           onClick={handleOpenDrawer}
-          className="p-2 text-gray-700 bg-white rounded-md shadow-md"
+          className="p-3 text-gray-700 bg-white rounded-full shadow-lg border border-gray-100 active:scale-95"
           aria-label="Open sidebar"
         >
           <HiMenuAlt2 className="h-6 w-6" />

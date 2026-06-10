@@ -38,6 +38,132 @@ const safeString = (value: unknown) => {
 const translate = (language: Language, key: TranslationKey) =>
   getTranslation(language, key);
 
+const normalizeText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getTokens = (value: string) =>
+  normalizeText(value)
+    .split(" ")
+    .filter((word) => word.length > 2);
+
+const includesAny = (text: string, phrases: string[]) =>
+  phrases.some((phrase) => text.includes(normalizeText(phrase)));
+
+const conversationalReplies = {
+  id: {
+    greeting:
+      "Halo, senang bertemu kamu. Saya bisa bantu soal studio, proyek, layanan desain, budget awal, atau kontak SAYA.GGH. Mau mulai dari mana?",
+    test:
+      "Tes masuk. Chat AI SAYA.GGH aktif dan siap bantu. Kamu bisa tanya soal lokasi, layanan, budget, portfolio, atau jadwal konsultasi.",
+    thanks:
+      "Sama-sama. Kalau masih ada yang ingin dicari, tinggal tulis saja. Saya bantu arahkan.",
+    contact:
+      "Bisa. Untuk respons paling cepat, kamu bisa hubungi SAYA.GGH lewat tombol WhatsApp di bawah. Kalau mau, tuliskan juga kebutuhan proyekmu di sini supaya saya bantu rangkum dulu.",
+    fallback:
+      "Bisa saya bantu, tapi saya perlu sedikit konteks lagi. Kamu ingin tanya soal lokasi, layanan desain, budget, portfolio, atau jadwal konsultasi?",
+    knowledgePrefix: "Bisa. Ini info yang saya punya:",
+  },
+  en: {
+    greeting:
+      "Hi, nice to meet you. I can help with the studio, projects, design services, starting budget, or SAYA.GGH contact details. Where would you like to start?",
+    test:
+      "Test received. SAYA.GGH chat is active and ready. You can ask about location, services, budget, portfolio, or consultation schedule.",
+    thanks:
+      "You're welcome. If you want to look for anything else, just send it here and I'll help guide you.",
+    contact:
+      "Sure. For the quickest response, use the WhatsApp button below. You can also describe your project here and I'll help summarize what you need.",
+    fallback:
+      "I can help, but I need a little more context. Are you asking about location, design services, budget, portfolio, or consultation schedule?",
+    knowledgePrefix: "Sure. Here's what I have:",
+  },
+} satisfies Record<
+  Language,
+  Record<
+    "greeting" | "test" | "thanks" | "contact" | "fallback" | "knowledgePrefix",
+    string
+  >
+>;
+
+const getConversationalReply = (message: string, language: Language) => {
+  const text = normalizeText(message);
+  const tokens = getTokens(text);
+  const shortMessage = tokens.length <= 3;
+
+  if (
+    shortMessage &&
+    includesAny(text, [
+      "halo",
+      "hai",
+      "hi",
+      "hello",
+      "hey",
+      "pagi",
+      "siang",
+      "sore",
+      "malam",
+    ])
+  ) {
+    return conversationalReplies[language].greeting;
+  }
+
+  if (
+    shortMessage &&
+    includesAny(text, ["test", "tes", "testing", "cek", "check", "ping"])
+  ) {
+    return conversationalReplies[language].test;
+  }
+
+  if (
+    shortMessage &&
+    includesAny(text, ["thanks", "thank you", "terima kasih", "makasih", "thx"])
+  ) {
+    return conversationalReplies[language].thanks;
+  }
+
+  if (
+    includesAny(text, [
+      "whatsapp",
+      "wa",
+      "contact",
+      "kontak",
+      "hubungi",
+      "phone",
+      "telepon",
+      "nomor",
+      "email",
+    ])
+  ) {
+    return conversationalReplies[language].contact;
+  }
+
+  return "";
+};
+
+const synonymGroups = [
+  ["lokasi", "alamat", "tempat", "dimana", "posisi", "kantor", "studio"],
+  ["location", "address", "where", "place", "office", "studio"],
+  ["harga", "biaya", "tarif", "budget", "anggaran", "mahal", "murah", "rate"],
+  ["price", "cost", "fee", "rate", "budget", "expensive", "cheap"],
+  ["kontak", "hubungi", "wa", "whatsapp", "telpon", "telepon", "email", "nomor"],
+  ["contact", "whatsapp", "phone", "email", "number", "reach"],
+  ["layanan", "jasa", "bikin", "buat", "desain", "bangun", "renovasi"],
+  ["service", "design", "build", "renovation", "interior", "architecture"],
+  ["portfolio", "karya", "proyek", "hasil", "contoh", "gambar"],
+  ["project", "portfolio", "work", "example", "image", "gallery"],
+];
+
+const formatKnowledgeReply = (content: string, language: Language) => {
+  const trimmed = content.trim();
+  if (!trimmed) return conversationalReplies[language].fallback;
+  return `${conversationalReplies[language].knowledgePrefix}\n\n${trimmed}`;
+};
+
 export async function POST(req: NextRequest) {
   let responseLanguage: Language = "id";
 
@@ -93,7 +219,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userMessage = message.toLowerCase();
+    const userMessage = normalizeText(message);
 
     // 1. Pastikan sesi ada lalu simpan pesan user
     const { data: session, error: sessionError } = await supabaseAdmin
@@ -126,6 +252,8 @@ export async function POST(req: NextRequest) {
     const isHumanMode = session.status === "human";
     if (isHumanMode) return NextResponse.json({ reply: null, mode: "human" });
 
+    const conversationalReply = getConversationalReply(message, responseLanguage);
+
     // 3. LOGIKA "SMART KEYWORD MATCHING" (AI LOKAL SEDERHANA)
     // Ambil semua data pengetahuan dari database
     const { data: knowledgeBase } = await supabaseAdmin
@@ -136,21 +264,7 @@ export async function POST(req: NextRequest) {
     let highestScore = 0;
 
     if (knowledgeBase && knowledgeBase.length > 0) {
-      // Normalisasi & Sinonim Dasar
-      // Mapping kata user -> topik yang mungkin dimaksud
-      const synonyms: Record<string, string[]> = {
-        lokasi: ["alamat", "tempat", "dimana", "posisi", "kantor", "studio"],
-        location: ["address", "where", "place", "office", "studio"],
-        harga: ["biaya", "fee", "tarif", "budget", "mahal", "murah", "rate"],
-        price: ["cost", "fee", "rate", "budget", "expensive", "cheap"],
-        kontak: ["hubungi", "wa", "whatsapp", "telpon", "email", "nomor"],
-        contact: ["whatsapp", "phone", "email", "number", "reach"],
-        layanan: ["jasa", "bikin", "buat", "desain", "bangun", "renovasi"],
-        service: ["design", "build", "renovation", "interior", "architecture"],
-        portfolio: ["karya", "proyek", "hasil", "contoh", "gambar"],
-        project: ["portfolio", "work", "example", "image", "gallery"],
-      };
-
+      const userTokens = getTokens(userMessage);
       for (const item of knowledgeBase) {
         const topic = safeString(localizeContent(item.topic, responseLanguage));
         const content = safeString(
@@ -158,26 +272,28 @@ export async function POST(req: NextRequest) {
         );
         if (!topic || !content) continue;
 
-        const topicLower = topic.toLowerCase();
+        const topicLower = normalizeText(topic);
+        const contentLower = normalizeText(content);
+        const searchableText = `${topicLower} ${contentLower}`;
         let score = 0;
 
-        // A. Cek kecocokan langsung dengan Topik
-        if (userMessage.includes(topicLower)) score += 10;
+        if (topicLower && userMessage.includes(topicLower)) score += 12;
 
-        // B. Cek kecocokan dengan Isi Konten (keyword penting)
-        // Kita pecah topik jadi kata-kata kunci
-        const topicWords = topicLower.split(" ");
-        for (const word of topicWords) {
-          if (word.length > 3 && userMessage.includes(word)) score += 3;
+        const topicWords = getTokens(topicLower);
+        for (const word of userTokens) {
+          if (topicWords.includes(word)) score += 5;
+          if (contentLower.includes(word)) score += 2;
         }
 
-        // C. Cek Sinonim (Logika Cerdas)
-        // Jika topik database adalah "Lokasi", tapi user tanya "Alamat", kita kasih poin.
-        for (const [key, words] of Object.entries(synonyms)) {
-          // Jika topik mengandung key (misal topik="Info Lokasi")
-          if (topicLower.includes(key)) {
-            // Dan pesan user mengandung salah satu sinonim (misal "alamat")
-            if (words.some((w) => userMessage.includes(w))) score += 5;
+        for (const group of synonymGroups) {
+          const userHasIntent = group.some((word) =>
+            userMessage.includes(normalizeText(word)),
+          );
+          const knowledgeHasIntent = group.some((word) =>
+            searchableText.includes(normalizeText(word)),
+          );
+          if (userHasIntent && knowledgeHasIntent) {
+            score += 6;
           }
         }
 
@@ -192,11 +308,12 @@ export async function POST(req: NextRequest) {
     let botReply = "";
 
     // Ambang batas skor agar tidak asal jawab (threshold)
-    if (bestMatchContent && highestScore >= 3) {
-      botReply = bestMatchContent;
+    if (bestMatchContent && highestScore >= 4) {
+      botReply = formatKnowledgeReply(bestMatchContent, responseLanguage);
+    } else if (conversationalReply) {
+      botReply = conversationalReply;
     } else {
-      // Fallback Default jika tidak mengerti
-      botReply = translate(responseLanguage, "chat.defaultReply");
+      botReply = conversationalReplies[responseLanguage].fallback;
     }
 
     // 5. Simpan Jawaban Bot

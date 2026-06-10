@@ -23,7 +23,7 @@ function AdminLayoutContent({
         setActiveTab={setActiveTab}
         onSignOut={onSignOut}
       />
-      <main className="flex-1 p-10 overflow-y-auto sm:ml-64 transition-all">
+      <main className="flex-1 overflow-y-auto p-4 pt-20 transition-all sm:ml-64 sm:p-10">
         {children}
       </main>
     </div>
@@ -67,14 +67,22 @@ export default function AdminLayout({
       const hasSession = Boolean(session);
       setIsAuthenticated(hasSession);
       setAuthChecked(true);
-      await syncAdminCookies(session);
 
       if (isLoginRoute) {
-        if (hasSession) router.replace("/admin/dashboard");
+        if (hasSession) {
+          await syncAdminCookies(session);
+          router.replace("/admin/dashboard");
+        }
         return;
       }
 
-      if (!hasSession) router.replace("/admin/login");
+      if (hasSession) {
+        void syncAdminCookies(session);
+        return;
+      }
+
+      await syncAdminCookies(null);
+      router.replace("/admin/login");
     };
 
     syncSession();
@@ -85,13 +93,15 @@ export default function AdminLayout({
 
         const hasSession = Boolean(session);
         setIsAuthenticated(hasSession);
-        void syncAdminCookies(session);
 
-        if (isLoginRoute && hasSession) {
-          router.replace("/admin/dashboard");
+        if (isLoginRoute) {
+          return;
         }
 
-        if (!isLoginRoute && !hasSession) {
+        if (hasSession) {
+          void syncAdminCookies(session);
+        } else {
+          void syncAdminCookies(null);
           router.replace("/admin/login");
         }
       },

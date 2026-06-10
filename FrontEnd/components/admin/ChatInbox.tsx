@@ -1,140 +1,200 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FaUser,
-  FaRobot,
-  FaPaperPlane,
-  FaUserTie,
-  FaCheckCircle,
-  FaTrash,
   FaArchive,
+  FaCheckCircle,
+  FaPaperPlane,
+  FaRobot,
+  FaTrash,
+  FaUserTie,
 } from "react-icons/fa";
-import { decodeChatContent, encodeChatContent } from "@/lib/chatMessage";
+import { decodeChatContent } from "@/lib/chatMessage";
+
+type ChatSessionStatus = "ai" | "human" | "closed";
+
+type ChatSession = {
+  id: string;
+  status: ChatSessionStatus;
+  created_at: string | null;
+};
+
+type ChatMessageRecord = {
+  id: number;
+  session_id: string | null;
+  content: string;
+  created_at: string | null;
+};
+
+type ChatMessage = ChatMessageRecord & {
+  role: "user" | "bot" | "admin";
+};
+
+const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
+  const response = await fetch(url, {
+    cache: "no-store",
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      message?: unknown;
+    } | null;
+    const message =
+      typeof body?.message === "string"
+        ? body.message
+        : `Request failed: ${response.status}`;
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+};
+
+const decodeMessage = (message: ChatMessageRecord): ChatMessage => {
+  const decoded = decodeChatContent(message.content || "");
+  return { ...message, role: decoded.role, content: decoded.content };
+};
 
 export default function ChatInbox() {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Load Sessions
-  useEffect(() => {
-    fetchSessions();
-
-    const channel = supabase
-      .channel("public:chat_sessions")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "chat_sessions" },
-        () => {
-          fetchSessions();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchSessions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("chat_sessions")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching sessions:", error);
-      } else {
-        setSessions(data || []);
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-    }
-  };
-
-  // 2. Load Messages
-  useEffect(() => {
-    if (!activeSessionId) return;
-
-    fetchMessages(activeSessionId);
-
-    const channel = supabase
-      .channel(`session:${activeSessionId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter: `session_id=eq.${activeSessionId}`,
-        },
-        (payload) => {
-          const decoded = decodeChatContent(payload.new.content || "");
-          setMessages((prev) => [
-            ...prev,
-            { ...payload.new, role: decoded.role, content: decoded.content },
-          ]);
-          scrollToBottom();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSessionId]);
-
-  const fetchMessages = async (sessionId: string) => {
-    const { data } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: true });
-    setMessages(
-      (data || []).map((m) => {
-        const decoded = decodeChatContent(m.content || "");
-        return { ...m, role: decoded.role, content: decoded.content };
-      }),
-    );
-    scrollToBottom();
-  };
-
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     setTimeout(
       () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
       100,
     );
+  }, []);
+
+  const fetchSessions = useCallback(async () => {
+    try {
+      const data = await fetchJson<{ sessions: ChatSession[] }>(
+        "/api/admin/chat/sessions",
+      );
+      setErrorMessage("");
+      setSessions(data.sessions);
+      setActiveSessionId((current) => {
+        if (!current) return current;
+        return data.sessions.some((session) => session.id === current)
+          ? current
+          : null;
+      });
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal memuat inbox: ${error.message}`
+          : "Gagal memuat inbox.",
+      );
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, []);
+
+  const fetchMessages = useCallback(
+    async (sessionId: string) => {
+      try {
+        setIsLoadingMessages(true);
+        const data = await fetchJson<{ messages: ChatMessageRecord[] }>(
+          `/api/admin/chat/sessions/${sessionId}/messages`,
+        );
+        setErrorMessage("");
+        setMessages(data.messages.map(decodeMessage));
+        scrollToBottom();
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setErrorMessage(
+          error instanceof Error
+            ? `Gagal memuat isi chat: ${error.message}`
+            : "Gagal memuat isi chat.",
+        );
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    },
+    [scrollToBottom],
+  );
+
+  useEffect(() => {
+    fetchSessions();
+    const intervalId = window.setInterval(fetchSessions, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchSessions]);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      setMessages([]);
+      return;
+    }
+
+    fetchMessages(activeSessionId);
+    const intervalId = window.setInterval(
+      () => fetchMessages(activeSessionId),
+      2500,
+    );
+    return () => window.clearInterval(intervalId);
+  }, [activeSessionId, fetchMessages]);
+
+  const refreshActiveSession = async () => {
+    await fetchSessions();
+    if (activeSessionId) {
+      await fetchMessages(activeSessionId);
+    }
   };
 
-  // 3. Actions
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeSessionId) return;
 
-    await supabase.from("chat_messages").insert([
-      {
-        session_id: activeSessionId,
-        content: encodeChatContent("admin", inputText),
-      },
-    ]);
+    try {
+      await fetchJson(`/api/admin/chat/sessions/${activeSessionId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content: inputText }),
+      });
 
-    setInputText("");
+      setErrorMessage("");
+      setInputText("");
+      await fetchMessages(activeSessionId);
+    } catch (error) {
+      console.error("Error sending admin message:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal mengirim balasan: ${error.message}`
+          : "Gagal mengirim balasan.",
+      );
+    }
   };
 
-  const toggleMode = async (currentStatus: string) => {
+  const setMode = async (nextStatus: "ai" | "human") => {
     if (!activeSessionId) return;
-    // Jika status closed, buka kembali jadi human
-    const newStatus = currentStatus === "ai" ? "human" : "ai";
-    await supabase
-      .from("chat_sessions")
-      .update({ status: newStatus })
-      .eq("id", activeSessionId);
+
+    try {
+      await fetchJson(`/api/admin/chat/sessions/${activeSessionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      setErrorMessage("");
+      await refreshActiveSession();
+    } catch (error) {
+      console.error("Error updating chat mode:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal mengganti mode chat: ${error.message}`
+          : "Gagal mengganti mode chat.",
+      );
+    }
   };
 
   const handleEndSession = async () => {
@@ -143,147 +203,225 @@ export default function ChatInbox() {
       !confirm(
         "Akhiri sesi chat ini? Pengunjung akan melihat notifikasi selesai.",
       )
-    )
+    ) {
       return;
+    }
 
-    await supabase
-      .from("chat_sessions")
-      .update({ status: "closed" })
-      .eq("id", activeSessionId);
+    try {
+      await fetchJson(`/api/admin/chat/sessions/${activeSessionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "closed" }),
+      });
 
-    // Kirim pesan sistem penutup
-    await supabase.from("chat_messages").insert([
-      {
-        session_id: activeSessionId,
-        content: encodeChatContent("admin", "--- Sesi chat diakhiri oleh Admin ---"),
-      },
-    ]);
+      setErrorMessage("");
+      await refreshActiveSession();
+    } catch (error) {
+      console.error("Error ending chat session:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal mengakhiri chat: ${error.message}`
+          : "Gagal mengakhiri chat.",
+      );
+    }
   };
 
   const handleDeleteSession = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Mencegah klik parent (pilih sesi)
-    if (!confirm("Hapus permanen sesi chat ini? Data tidak bisa dikembalikan."))
+    e.stopPropagation();
+    if (!confirm("Hapus sesi chat ini dari Inbox?")) {
       return;
+    }
 
-    await supabase.from("chat_sessions").delete().eq("id", id);
-    if (activeSessionId === id) setActiveSessionId(null);
-    fetchSessions();
+    try {
+      await fetchJson(`/api/admin/chat/sessions/${id}`, { method: "DELETE" });
+      setErrorMessage("");
+      if (activeSessionId === id) setActiveSessionId(null);
+      await fetchSessions();
+    } catch (error) {
+      console.error("Error deleting chat session:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal menghapus chat: ${error.message}`
+          : "Gagal menghapus chat.",
+      );
+    }
+  };
+
+  const handleClearAllSessions = async () => {
+    if (sessions.length === 0) return;
+    if (
+      !confirm(
+        `Hapus semua ${sessions.length} sesi chat dari Inbox? Data chat tidak bisa dikembalikan.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      await fetchJson("/api/admin/chat/sessions", { method: "DELETE" });
+      setErrorMessage("");
+      setActiveSessionId(null);
+      setMessages([]);
+      await fetchSessions();
+    } catch (error) {
+      console.error("Error clearing chat inbox:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Gagal menghapus semua chat: ${error.message}`
+          : "Gagal menghapus semua chat.",
+      );
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const activeSessionData = sessions.find((s) => s.id === activeSessionId);
+  const canReply = activeSessionData?.status === "human";
 
   return (
-    <div className="flex h-[calc(100vh-100px)] border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm animate-in fade-in">
-      {/* LEFT: SESSIONS LIST */}
-      <div className="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
-        <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
-          <h2 className="font-bold text-lg">Inbox</h2>
+    <div className="flex h-[calc(100vh-100px)] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm animate-in fade-in">
+      <div className="flex w-1/3 flex-col border-r border-gray-200 bg-gray-50">
+        <div className="border-b border-gray-200 bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold">Inbox</h2>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                {sessions.length} sesi chat
+              </p>
+            </div>
+            <button
+              onClick={handleClearAllSessions}
+              disabled={isClearing || sessions.length === 0}
+              className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-red-600 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isClearing ? "Menghapus..." : "Hapus Semua"}
+            </button>
+          </div>
           <button
             onClick={() => fetchSessions()}
-            className="text-xs text-blue-600 hover:underline"
+            className="mt-3 text-xs font-semibold text-blue-600 hover:underline"
           >
             Refresh
           </button>
+          {errorMessage && (
+            <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">
+              {errorMessage}
+            </p>
+          )}
         </div>
-        <div className="flex-1 overflow-y-auto">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              onClick={() => setActiveSessionId(session.id)}
-              className={`group p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-white relative ${
-                activeSessionId === session.id
-                  ? "bg-white border-l-4 border-l-black"
-                  : ""
-              } ${session.status === "closed" ? "opacity-60 bg-gray-100" : ""}`}
-            >
-              <div className="flex justify-between items-center mb-1 pr-6">
-                <span className="font-bold text-xs uppercase tracking-wider text-gray-500">
-                  Visitor {session.id.slice(0, 4)}
-                </span>
-                <span
-                  className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase border ${
-                    session.status === "human"
-                      ? "bg-blue-50 text-blue-600 border-blue-200"
-                      : session.status === "closed"
-                        ? "bg-gray-200 text-gray-500 border-gray-300"
-                        : "bg-green-50 text-green-600 border-green-200"
-                  }`}
-                >
-                  {session.status}
-                </span>
-              </div>
-              <p className="text-xs text-gray-400">
-                {new Date(session.created_at).toLocaleString()}
-              </p>
 
-              {/* Delete Button (Hover Only) */}
-              <button
-                onClick={(e) => handleDeleteSession(e, session.id)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all"
-                title="Hapus Chat"
-              >
-                <FaTrash />
-              </button>
+        <div className="flex-1 overflow-y-auto">
+          {isLoadingSessions ? (
+            <div className="p-6 text-center text-xs font-bold uppercase tracking-widest text-gray-400">
+              Memuat inbox...
             </div>
-          ))}
+          ) : sessions.length === 0 ? (
+            <div className="p-6 text-center text-xs font-bold uppercase tracking-widest text-gray-400">
+              Inbox bersih.
+            </div>
+          ) : (
+            sessions.map((session) => (
+              <div
+                key={session.id}
+                onClick={() => setActiveSessionId(session.id)}
+                className={`group relative cursor-pointer border-b border-gray-100 p-4 transition-colors hover:bg-white ${
+                  activeSessionId === session.id
+                    ? "border-l-4 border-l-black bg-white"
+                    : ""
+                } ${session.status === "closed" ? "bg-gray-100 opacity-60" : ""}`}
+              >
+                <div className="mb-1 flex items-center justify-between pr-6">
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Visitor {session.id.slice(0, 4)}
+                  </span>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase ${
+                      session.status === "human"
+                        ? "border-blue-200 bg-blue-50 text-blue-600"
+                        : session.status === "closed"
+                          ? "border-gray-300 bg-gray-200 text-gray-500"
+                          : "border-green-200 bg-green-50 text-green-600"
+                    }`}
+                  >
+                    {session.status === "human"
+                      ? "MANUSIA"
+                      : session.status === "ai"
+                        ? "AI"
+                        : "SELESAI"}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400">
+                  {session.created_at
+                    ? new Date(session.created_at).toLocaleString()
+                    : "Waktu tidak tersedia"}
+                </p>
+
+                <button
+                  onClick={(e) => handleDeleteSession(e, session.id)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-300 opacity-0 transition-all hover:text-red-500 group-hover:opacity-100"
+                  title="Hapus sesi chat"
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* RIGHT: CHAT AREA */}
-      <div className="w-2/3 flex flex-col bg-white">
-        {activeSessionId ? (
+      <div className="flex w-2/3 flex-col bg-white">
+        {activeSessionId && activeSessionData ? (
           <>
-            {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-white">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="font-bold flex items-center gap-2">
-                    Live Chat
-                    {activeSessionData?.status === "closed" && (
-                      <span className="text-xs font-normal text-red-500">
-                        (Selesai)
-                      </span>
-                    )}
-                  </h3>
-                  <p className="text-xs text-gray-400">ID: {activeSessionId}</p>
-                </div>
+            <div className="flex items-center justify-between border-b border-gray-200 bg-white p-4">
+              <div>
+                <h3 className="flex items-center gap-2 font-bold">
+                  Live Chat
+                  {activeSessionData.status === "closed" && (
+                    <span className="text-xs font-normal text-red-500">
+                      (Selesai)
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-gray-400">ID: {activeSessionId}</p>
               </div>
 
-              <div className="flex gap-2">
-                {activeSessionData?.status !== "closed" && (
+              <div className="flex items-center gap-2">
+                {activeSessionData.status !== "closed" ? (
                   <>
-                    <button
-                      onClick={() => toggleMode(activeSessionData?.status)}
-                      className={`px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 border ${
-                        activeSessionData?.status === "human"
-                          ? "bg-white text-black border-black hover:bg-gray-100"
-                          : "bg-black text-white border-black hover:bg-gray-800"
-                      }`}
-                    >
-                      {activeSessionData?.status === "human" ? (
-                        <>
-                          <FaRobot /> AI Mode
-                        </>
-                      ) : (
-                        <>
-                          <FaUserTie /> Take Over
-                        </>
-                      )}
-                    </button>
+                    <div className="flex overflow-hidden rounded-lg border border-gray-200">
+                      <button
+                        onClick={() => setMode("ai")}
+                        className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                          activeSessionData.status === "ai"
+                            ? "bg-black text-white"
+                            : "bg-white text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        <FaRobot /> AI
+                      </button>
+                      <button
+                        onClick={() => setMode("human")}
+                        className={`flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                          activeSessionData.status === "human"
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        <FaUserTie /> Manusia
+                      </button>
+                    </div>
 
                     <button
                       onClick={handleEndSession}
-                      className="px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 flex items-center gap-2"
+                      className="flex items-center gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold uppercase tracking-wider text-red-600 hover:bg-red-100"
                     >
                       <FaCheckCircle /> End
                     </button>
                   </>
-                )}
-
-                {activeSessionData?.status === "closed" && (
+                ) : (
                   <button
                     onClick={(e) => handleDeleteSession(e, activeSessionId)}
-                    className="text-red-500 hover:text-red-700 p-2 text-sm"
+                    className="flex items-center gap-2 p-2 text-sm text-red-500 hover:text-red-700"
                   >
                     <FaTrash /> Hapus
                   </button>
@@ -291,71 +429,79 @@ export default function ChatInbox() {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.role === "admin" ? "justify-end" : "justify-start"}`}
-                >
+            <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50 p-6">
+              {isLoadingMessages && messages.length === 0 ? (
+                <p className="py-8 text-center text-xs font-bold uppercase tracking-widest text-gray-400">
+                  Memuat pesan...
+                </p>
+              ) : (
+                messages.map((msg) => (
                   <div
-                    className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm ${
-                      msg.role === "admin"
-                        ? "bg-blue-600 text-white rounded-tr-sm"
-                        : msg.role === "user"
-                          ? "bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm"
-                          : "bg-green-50 border border-green-100 text-green-800 rounded-tl-sm text-xs italic"
-                    } ${msg.content.includes("--- Sesi chat diakhiri") ? "w-full text-center bg-transparent text-gray-400 italic text-xs shadow-none border-0" : ""}`}
+                    key={msg.id}
+                    className={`flex ${
+                      msg.role === "admin" ? "justify-end" : "justify-start"
+                    }`}
                   >
-                    {msg.role === "bot" && !msg.content.includes("---") && (
-                      <strong className="block text-[10px] uppercase mb-1 not-italic">
-                        AI Assistant
-                      </strong>
-                    )}
-                    {msg.content}
+                    <div
+                      className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm ${
+                        msg.role === "admin"
+                          ? "rounded-tr-sm bg-blue-600 text-white"
+                          : msg.role === "user"
+                            ? "rounded-tl-sm border border-gray-200 bg-white text-gray-800 shadow-sm"
+                            : "rounded-tl-sm border border-green-100 bg-green-50 text-xs italic text-green-800"
+                      } ${
+                        msg.content.includes("--- Sesi chat diakhiri")
+                          ? "w-full border-0 bg-transparent text-center text-xs italic text-gray-400 shadow-none"
+                          : ""
+                      }`}
+                    >
+                      {msg.role === "bot" && !msg.content.includes("---") && (
+                        <strong className="mb-1 block text-[10px] uppercase not-italic">
+                          AI Assistant
+                        </strong>
+                      )}
+                      {msg.content}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            {activeSessionData?.status !== "closed" ? (
+            {activeSessionData.status !== "closed" ? (
               <form
                 onSubmit={handleSend}
-                className="p-4 border-t border-gray-200 bg-white flex gap-2"
+                className="flex gap-2 border-t border-gray-200 bg-white p-4"
               >
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={
-                    activeSessionData?.status === "ai"
-                      ? "Mode AI Aktif. Switch ke Human untuk membalas..."
-                      : "Ketik balasan..."
+                    canReply
+                      ? "Ketik balasan admin..."
+                      : "Aktifkan mode MANUSIA untuk membalas pengunjung."
                   }
-                  disabled={activeSessionData?.status === "ai"}
-                  className="flex-1 bg-gray-50 border-0 rounded-lg px-4 focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!canReply}
+                  className="flex-1 rounded-lg border-0 bg-gray-50 px-4 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <button
                   type="submit"
-                  disabled={
-                    activeSessionData?.status === "ai" || !inputText.trim()
-                  }
-                  className="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={!canReply || !inputText.trim()}
+                  className="rounded-lg bg-blue-600 p-3 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <FaPaperPlane />
                 </button>
               </form>
             ) : (
-              <div className="p-4 bg-gray-100 text-center text-xs text-gray-500 font-bold uppercase tracking-widest border-t border-gray-200">
+              <div className="border-t border-gray-200 bg-gray-100 p-4 text-center text-xs font-bold uppercase tracking-widest text-gray-500">
                 Sesi ini telah selesai
               </div>
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-300">
-            <FaArchive className="text-6xl mb-4 opacity-20" />
+          <div className="flex flex-1 flex-col items-center justify-center text-gray-300">
+            <FaArchive className="mb-4 text-6xl opacity-20" />
             <p>Pilih percakapan dari Inbox.</p>
           </div>
         )}
