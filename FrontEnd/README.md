@@ -1,38 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SAYA.GGH FrontEnd
 
-## Getting Started
+Aplikasi utama SAYA.GGH berbasis Next.js App Router. Folder ini berisi website publik, dashboard admin, API route chat/admin, integrasi Supabase, translasi bilingual, dan live chat.
 
-Use Node.js 22 LTS for local development.
+## Stack
 
-First, run the development server:
+- Next.js 15, React 19, TypeScript.
+- Tailwind CSS, Flowbite React, Framer Motion.
+- Supabase untuk PostgreSQL, Auth, dan Storage.
+- Google Gemini API untuk translasi AI.
+
+## Setup
+
+Gunakan Node.js 22.x.
+
+```bash
+cd FrontEnd
+npm install
+```
+
+Buat `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+CHAT_SESSION_SECRET=replace_with_a_long_random_secret
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+`SUPABASE_SERVICE_ROLE_KEY`, `CHAT_SESSION_SECRET`, dan `GEMINI_API_KEY` harus tetap server-side.
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run start
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Development server berjalan di `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Route
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Halaman | Route |
+| --- | --- |
+| Home | `/` |
+| About | `/about` |
+| Project List | `/project` |
+| Project Detail | `/project/[id]` |
+| News List | `/news` |
+| News Detail | `/news/[id]` |
+| Admin Login | `/admin/login` |
+| Admin Dashboard | `/admin/dashboard` |
+| Admin Debug | `/admin/debug` hanya development |
 
-## Learn More
+## Supabase
 
-To learn more about Next.js, take a look at the following resources:
+Schema awal dan instruksi lengkap ada di README root repository. SQL tambahan tersedia di:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `sql/harden-supabase-security.sql`
+- `sql/add-news-gallery-urls.sql`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Pastikan bucket Storage bernama `images` sudah dibuat dan user admin di Supabase Auth sudah diberi `app_metadata.role = "admin"`.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Jika upload gambar dari dashboard gagal, cek policy Storage untuk bucket `images` di README root.
